@@ -649,6 +649,113 @@
       transition: width 0.5s ease;
       width: 0%;
     }
+    /* ── Gene editor fullscreen modal ── */
+    #gene-editor-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+    }
+    #gene-editor-modal.open { display: block; }
+
+    #gene-editor-btn {
+      width: 100%;
+      background: transparent;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: #4a6312;
+      font-size: var(--fs-sm);
+      font-weight: 600;
+      padding: 9px 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    #gene-editor-btn:hover { background: var(--lime-dim); border-color: var(--lime-border); }
+
+    /* Norna gene editor scoped styles */
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap');
+    .norna-ge {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      font-weight: 300;
+      background: #f0ede5;
+      position: relative;
+      overflow: hidden;
+      width: 100%; height: 100%;
+      color: #20281c;
+      letter-spacing: 0.01em;
+    }
+    .norna-ge * { box-sizing: border-box; }
+    .norna-ge .stage-bg { position: absolute; inset: 0; z-index: 1; pointer-events: none; width: 100%; height: 100%; }
+    .norna-ge .bubble-svg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; }
+    .norna-ge .float-tl {
+      position: absolute; top: 18px; left: 18px; z-index: 10;
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(255,255,255,0.62); backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px); border-radius: 999px;
+      border: 1px solid rgba(168,176,138,0.35); padding: 5px 18px 5px 5px;
+    }
+    .norna-ge .back-btn {
+      width: 34px; height: 34px; background: #16160e; color: #c8e63e;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 16px; cursor: pointer; border: none;
+    }
+    .norna-ge .tl-text { display: flex; flex-direction: column; gap: 1px; line-height: 1.1; }
+    .norna-ge .tl-eyebrow { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: #8b7355; }
+    .norna-ge .tl-title { font-family: 'Syne', sans-serif; font-weight: 800; color: #16160e; font-size: 13px; letter-spacing: -0.015em; }
+    .norna-ge .tl-title em { font-style: italic; color: #8b7355; }
+    .norna-ge .float-tr { position: absolute; top: 18px; right: 18px; z-index: 10; display: flex; gap: 8px; }
+    .norna-ge .stat-pill {
+      background: rgba(255,255,255,0.62); backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px); border: 1px solid rgba(168,176,138,0.35);
+      border-radius: 999px; padding: 8px 14px; font-size: 10.5px; color: #5d4d36; letter-spacing: 0.04em;
+    }
+    .norna-ge .stat-pill strong { font-family: 'Syne'; font-weight: 800; font-size: 13px; color: #16160e; margin-right: 6px; letter-spacing: -0.01em; }
+    .norna-ge .stat-pill.accent strong { color: #6b8217; }
+    .norna-ge .float-bottom { position: absolute; bottom: 18px; left: 18px; z-index: 10; pointer-events: none; }
+    .norna-ge .gene-card {
+      background: rgba(255,255,255,0.65); backdrop-filter: blur(32px);
+      -webkit-backdrop-filter: blur(32px); border-radius: 20px;
+      border: 1px solid rgba(168,176,138,0.4); padding: 16px 22px;
+      pointer-events: auto; min-width: 400px;
+    }
+    .norna-ge .gene-card-top { display: flex; align-items: baseline; gap: 16px; margin-bottom: 12px; }
+    .norna-ge .gene-id { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 26px; color: #16160e; letter-spacing: -0.025em; line-height: 1; }
+    .norna-ge .gene-name { font-size: 13px; color: #20281c; font-weight: 400; }
+    .norna-ge .gene-origin { font-size: 11px; color: #8b7355; margin-top: 2px; }
+    .norna-ge .gene-plant-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 0px; }
+    .norna-ge .gene-card-meta { display: flex; gap: 22px; font-size: 10px; color: #8b7355; letter-spacing: 0.12em; text-transform: uppercase; }
+    .norna-ge .gene-card-meta strong { color: #16160e; font-weight: 500; margin-right: 6px; font-size: 12.5px; text-transform: none; letter-spacing: 0; }
+    .norna-ge .gene-card-meta strong.lime { color: #6b8217; }
+    .norna-ge .gene-stab { margin-top: 10px; height: 3px; background: rgba(168,176,138,0.3); border-radius: 2px; overflow: hidden; }
+    .norna-ge .gene-stab-fill { height: 100%; background: #c8e63e; border-radius: 2px; transition: width 0.5s; }
+    .norna-ge .bubble-3d { cursor: pointer; transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); transform-origin: center; transform-box: fill-box; }
+    .norna-ge .bubble-3d:hover { transform: scale(1.18); }
+    .norna-ge .p-arab .bubble-sphere { animation: ge-pulse-lime 2.8s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
+    @keyframes ge-pulse-lime { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.13); } }
+    .norna-ge .bond-line { stroke: #a8b08a; stroke-width: 1.3; opacity: 0.4; stroke-dasharray: 5 4; fill: none; transition: all 0.3s; }
+    .norna-ge .bond-line.active { stroke: #c8e63e; opacity: 1; stroke-width: 2.5; stroke-dasharray: none; }
+    .norna-ge .bubble-label { font-family: 'DM Sans', sans-serif; font-weight: 500; font-size: 10.5px; pointer-events: none; text-anchor: middle; letter-spacing: 0.06em; }
+    .norna-ge .p-tomato .bubble-label { fill: #1a1f12; }
+    .norna-ge .p-cactus .bubble-label { fill: #f0ede5; }
+    .norna-ge .p-arab   .bubble-label { fill: #16160e; }
+    .norna-ge .p-banana .bubble-label { fill: #c8e63e; }
+    .norna-ge .ge-tooltip {
+      position: absolute; background: rgba(22,22,14,0.96); color: #f0ede5;
+      padding: 12px 16px; border-radius: 14px; font-size: 11px;
+      pointer-events: none; opacity: 0; transition: opacity 0.18s, transform 0.18s;
+      z-index: 15; max-width: 230px;
+      border: 1px solid rgba(200,230,62,0.35); transform: translateY(4px); letter-spacing: 0.02em;
+    }
+    .norna-ge .ge-tooltip.show { opacity: 1; transform: translateY(0); }
+    .norna-ge .ge-tooltip strong { color: #c8e63e; font-family: 'Syne'; font-weight: 800; display: block; font-size: 15px; letter-spacing: -0.015em; }
+    .norna-ge .ge-tooltip .t-sub { color: rgba(240,237,229,0.85); margin: 3px 0 9px; font-size: 11px; }
+    .norna-ge .ge-tooltip .t-row { display: flex; justify-content: space-between; gap: 14px; margin-top: 4px; font-size: 10.5px; }
+    .norna-ge .ge-tooltip .t-row span:first-child { color: rgba(240,237,229,0.5); }
+    .norna-ge .ge-tooltip .t-row span:last-child { color: #f0ede5; font-weight: 500; }
+
   </style>
 </head>
 <body class="pre-sim">
@@ -769,6 +876,98 @@
       </div>
     </div>
 
+    <!-- Modificar Genoma -->
+    <div class="panel-section">
+      <div class="section-label">Modificar Genoma</div>
+      <button id="gene-editor-btn" onclick="openGeneEditor()">
+        🧬 Previsualizar red génica
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ── Gene editor fullscreen modal ── -->
+  <div id="gene-editor-modal">
+    <div class="norna-ge">
+      <svg class="stage-bg" viewBox="0 0 1280 800" preserveAspectRatio="none">
+        <ellipse cx="1100" cy="100" rx="320" ry="180" fill="#c8e63e" opacity="0.08"/>
+        <ellipse cx="80"   cy="720" rx="340" ry="200" fill="#a8b08a" opacity="0.2"/>
+        <ellipse cx="700"  cy="500" rx="260" ry="120" fill="#a8b08a" opacity="0.08"/>
+        <path d="M -30 260 Q 320 180 640 360 T 1300 280" stroke="#a8b08a" stroke-width="0.6" fill="none" opacity="0.3"/>
+        <path d="M -30 620 Q 380 540 800 700 T 1300 640" stroke="#a8b08a" stroke-width="0.6" fill="none" opacity="0.25"/>
+      </svg>
+
+      <svg class="bubble-svg" id="ge-svg" viewBox="0 0 1280 800" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <radialGradient id="ge-g-tomato" cx="30%" cy="26%" r="80%">
+            <stop offset="0%"   stop-color="#dde3c0"/>
+            <stop offset="42%"  stop-color="#a8b08a"/>
+            <stop offset="100%" stop-color="#4a4f37"/>
+          </radialGradient>
+          <radialGradient id="ge-g-cactus" cx="30%" cy="26%" r="80%">
+            <stop offset="0%"   stop-color="#cca884"/>
+            <stop offset="42%"  stop-color="#8b7355"/>
+            <stop offset="100%" stop-color="#3a2f1f"/>
+          </radialGradient>
+          <radialGradient id="ge-g-arab" cx="30%" cy="26%" r="80%">
+            <stop offset="0%"   stop-color="#eef9b2"/>
+            <stop offset="42%"  stop-color="#c8e63e"/>
+            <stop offset="100%" stop-color="#5a6e14"/>
+          </radialGradient>
+          <radialGradient id="ge-g-banana" cx="30%" cy="26%" r="80%">
+            <stop offset="0%"   stop-color="#525c47"/>
+            <stop offset="42%"  stop-color="#20281c"/>
+            <stop offset="100%" stop-color="#080a05"/>
+          </radialGradient>
+          <filter id="ge-soft-shadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
+            <feOffset dx="2" dy="5"/>
+            <feComponentTransfer><feFuncA type="linear" slope="0.22"/></feComponentTransfer>
+            <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <radialGradient id="ge-rim-light" cx="70%" cy="75%" r="60%">
+            <stop offset="60%"  stop-color="white" stop-opacity="0"/>
+            <stop offset="100%" stop-color="white" stop-opacity="0.18"/>
+          </radialGradient>
+        </defs>
+        <g id="ge-bonds"></g>
+        <g id="ge-bubbles"></g>
+      </svg>
+
+      <div class="float-tl">
+        <button class="back-btn" onclick="closeGeneEditor()" aria-label="Volver">←</button>
+        <div class="tl-text">
+          <div class="tl-eyebrow">Editor de genoma · gh-a1</div>
+          <div class="tl-title">Solanum lycopersicum <em>×</em> Echinocactus</div>
+        </div>
+      </div>
+
+      <div class="float-tr">
+        <div class="stat-pill"><strong>10</strong>genes</div>
+        <div class="stat-pill"><strong>12</strong>enlaces</div>
+        <div class="stat-pill accent"><strong>98.4%</strong>integridad</div>
+      </div>
+
+      <div class="float-bottom">
+        <div class="gene-card">
+          <div class="gene-card-top">
+            <div class="gene-id" id="ge-gene-id">PHOT-1</div>
+            <div>
+              <div class="gene-name" id="ge-gene-name">Photosynthesis I</div>
+              <div class="gene-origin"><span class="gene-plant-dot" id="ge-plant-dot" style="background:#a8b08a"></span><span id="ge-plant-name">Solanum lycopersicum</span></div>
+            </div>
+          </div>
+          <div class="gene-card-meta">
+            <div><strong class="lime" id="ge-stab-val">92%</strong>estabilidad</div>
+            <div><strong id="ge-bonds-val">4</strong>enlaces</div>
+            <div><strong>activa</strong></div>
+          </div>
+          <div class="gene-stab"><div class="gene-stab-fill" id="ge-stab-bar" style="width:92%"></div></div>
+        </div>
+      </div>
+
+      <div class="ge-tooltip" id="ge-tooltip"></div>
+    </div>
   </div>
 
   <!-- ── Right: 3D canvas ── -->
@@ -1099,6 +1298,144 @@
     });
     window.toggleHistTooltip = toggleHistTooltip;
     window.loadHistItem = loadHistItem;
+
+    // ── Gene editor modal ──
+    let geBuilt = false;
+
+    function openGeneEditor() {
+      document.getElementById('gene-editor-modal').classList.add('open');
+      if (!geBuilt) { buildGeneEditor(); geBuilt = true; }
+    }
+    function closeGeneEditor() {
+      document.getElementById('gene-editor-modal').classList.remove('open');
+    }
+
+    function buildGeneEditor() {
+      const geBubbles = [
+        { id:'PHOT-1',  name:'Photosynthesis I',      plant:'tomato', plantName:'Solanum lycopersicum',  x:640, y:260, r:54, stability:92 },
+        { id:'CHL-A',   name:'Chlorophyll A',          plant:'tomato', plantName:'Solanum lycopersicum',  x:220, y:155, r:40, stability:88 },
+        { id:'COLD-R',  name:'Cold Resistance',        plant:'arab',   plantName:'Arabidopsis thaliana',  x:1040,y:170, r:44, stability:81 },
+        { id:'STEM-S',  name:'Stem Strength',          plant:'banana', plantName:'Musa acuminata',        x:545, y:430, r:36, stability:86 },
+        { id:'ROOT-D',  name:'Deep Roots',             plant:'cactus', plantName:'Echinocactus grusonii', x:210, y:415, r:52, stability:95 },
+        { id:'FRUIT-X', name:'Fruit Size',             plant:'tomato', plantName:'Solanum lycopersicum',  x:990, y:415, r:50, stability:76 },
+        { id:'DRGT-2',  name:'Drought Tolerance',      plant:'cactus', plantName:'Echinocactus grusonii', x:545, y:620, r:46, stability:89 },
+        { id:'PEST-A',  name:'Pest Defense',           plant:'cactus', plantName:'Echinocactus grusonii', x:210, y:640, r:36, stability:70 },
+        { id:'NUT-K',   name:'K+ Uptake',              plant:'banana', plantName:'Musa acuminata',        x:880, y:645, r:42, stability:79 },
+        { id:'FLOW-T',  name:'Flowering Time',         plant:'arab',   plantName:'Arabidopsis thaliana',  x:1100,y:605, r:38, stability:84 },
+      ];
+      const geBonds = [
+        ['PHOT-1','CHL-A'],['PHOT-1','FRUIT-X'],['PHOT-1','STEM-S'],['PHOT-1','COLD-R'],
+        ['CHL-A','STEM-S'],
+        ['ROOT-D','DRGT-2'],['ROOT-D','NUT-K'],['ROOT-D','PEST-A'],
+        ['DRGT-2','STEM-S'],
+        ['FRUIT-X','FLOW-T'],['FRUIT-X','NUT-K'],
+        ['COLD-R','FLOW-T'],
+      ];
+      const gePlantColors = { tomato:'#a8b08a', cactus:'#8b7355', arab:'#c8e63e', banana:'#20281c' };
+      const geBMap = Object.fromEntries(geBubbles.map(b => [b.id, b]));
+      const bondsG   = document.getElementById('ge-bonds');
+      const bubblesG = document.getElementById('ge-bubbles');
+      const svgNS    = 'http://www.w3.org/2000/svg';
+      const tooltip  = document.getElementById('ge-tooltip');
+      const container= document.querySelector('.norna-ge');
+
+      geBonds.forEach(([a, b]) => {
+        const A = geBMap[a], B = geBMap[b];
+        const mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2;
+        const dx = B.x - A.x, dy = B.y - A.y, off = 0.09;
+        const path = document.createElementNS(svgNS, 'path');
+        path.setAttribute('d', `M ${A.x} ${A.y} Q ${mx + (-dy * off)} ${my + (dx * off)} ${B.x} ${B.y}`);
+        path.setAttribute('class', 'bond-line');
+        path.dataset.a = a; path.dataset.b = b;
+        bondsG.appendChild(path);
+      });
+
+      geBubbles.forEach(b => {
+        const wrap = document.createElementNS(svgNS, 'g');
+        wrap.setAttribute('transform', `translate(${b.x}, ${b.y})`);
+        const g = document.createElementNS(svgNS, 'g');
+        g.setAttribute('class', `bubble-3d p-${b.plant}`);
+        g.dataset.id = b.id;
+
+        const sphere = document.createElementNS(svgNS, 'circle');
+        sphere.setAttribute('r', b.r);
+        sphere.setAttribute('fill', `url(#ge-g-${b.plant})`);
+        sphere.setAttribute('filter', 'url(#ge-soft-shadow)');
+        sphere.setAttribute('class', 'bubble-sphere');
+        g.appendChild(sphere);
+
+        const rim = document.createElementNS(svgNS, 'circle');
+        rim.setAttribute('r', b.r);
+        rim.setAttribute('fill', 'url(#ge-rim-light)');
+        rim.setAttribute('pointer-events', 'none');
+        g.appendChild(rim);
+
+        const hl = document.createElementNS(svgNS, 'ellipse');
+        hl.setAttribute('cx', -b.r * 0.3); hl.setAttribute('cy', -b.r * 0.4);
+        hl.setAttribute('rx', b.r * 0.36); hl.setAttribute('ry', b.r * 0.18);
+        hl.setAttribute('fill', 'white'); hl.setAttribute('opacity', '0.5');
+        hl.setAttribute('pointer-events', 'none');
+        hl.setAttribute('transform', `rotate(-30 ${-b.r * 0.3} ${-b.r * 0.4})`);
+        g.appendChild(hl);
+
+        const dot = document.createElementNS(svgNS, 'circle');
+        dot.setAttribute('cx', -b.r * 0.42); dot.setAttribute('cy', -b.r * 0.52);
+        dot.setAttribute('r', b.r * 0.09);
+        dot.setAttribute('fill', 'white'); dot.setAttribute('opacity', '0.92');
+        dot.setAttribute('pointer-events', 'none');
+        g.appendChild(dot);
+
+        const text = document.createElementNS(svgNS, 'text');
+        text.setAttribute('class', 'bubble-label');
+        text.setAttribute('dy', '0.35em');
+        text.textContent = b.id;
+        g.appendChild(text);
+
+        wrap.appendChild(g);
+        bubblesG.appendChild(wrap);
+
+        g.addEventListener('mouseenter', () => {
+          document.querySelectorAll('#ge-bonds .bond-line').forEach(bond => {
+            if (bond.dataset.a === b.id || bond.dataset.b === b.id) bond.classList.add('active');
+          });
+          const bondsCount = geBonds.filter(bb => bb[0] === b.id || bb[1] === b.id).length;
+          tooltip.innerHTML = `<strong>${b.id}</strong>
+            <div class="t-sub">${b.name}</div>
+            <div class="t-row"><span>Origen</span><span>${b.plantName}</span></div>
+            <div class="t-row"><span>Estabilidad</span><span>${b.stability}%</span></div>
+            <div class="t-row"><span>Enlaces</span><span>${bondsCount}</span></div>`;
+          const gr = g.getBoundingClientRect(), cr = container.getBoundingClientRect();
+          let left = gr.left + gr.width / 2 - cr.left + b.r + 14;
+          let top  = gr.top  + gr.height / 2 - cr.top - 60;
+          if (left + 240 > cr.width - 20) left = gr.left + gr.width / 2 - cr.left - b.r - 254;
+          if (left < 20) left = 20;
+          if (top < 80) top = 80;
+          if (top + 160 > cr.height - 160) top = cr.height - 320;
+          tooltip.style.left = left + 'px';
+          tooltip.style.top  = top  + 'px';
+          tooltip.classList.add('show');
+          geSelect(b, geBonds, gePlantColors);
+        });
+        g.addEventListener('mouseleave', () => {
+          document.querySelectorAll('#ge-bonds .bond-line').forEach(bond => bond.classList.remove('active'));
+          tooltip.classList.remove('show');
+        });
+        g.addEventListener('click', () => geSelect(b, geBonds, gePlantColors));
+      });
+    }
+
+    function geSelect(b, geBonds, gePlantColors) {
+      document.getElementById('ge-gene-id').textContent  = b.id;
+      document.getElementById('ge-gene-name').textContent = b.name;
+      document.getElementById('ge-plant-name').textContent = b.plantName;
+      document.getElementById('ge-plant-dot').style.background = gePlantColors[b.plant];
+      document.getElementById('ge-stab-val').textContent = b.stability + '%';
+      document.getElementById('ge-stab-bar').style.width  = b.stability + '%';
+      document.getElementById('ge-bonds-val').textContent = geBonds.filter(bb => bb[0] === b.id || bb[1] === b.id).length;
+    }
+
+    window.openGeneEditor  = openGeneEditor;
+    window.closeGeneEditor = closeGeneEditor;
   </script>
 
   <script type="importmap">
