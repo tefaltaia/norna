@@ -3,35 +3,53 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NORNA · Histórico 3D del Trigo</title>
+  <title>NORNA · Gemelo Digital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     :root {
-      --nk: #fafaf8;
-      --forest: #ffffff;
-      --lime: #c4e832;
-      --lime-dim: rgba(196,232,50,0.16);
-      --lime-border: rgba(196,232,50,0.45);
-      --text: #1a1a16;
-      --muted: #97968c;
-      --panel-bg: rgba(255,255,255,0.95);
-      --on-lime: #1a1a16;
-      --line: #ececea;
-      --canvas-bg: #e4e6e1;
-      --canvas-line: rgba(20,24,18,0.25);
-      --canvas-muted: rgba(20,24,18,0.88);
-      --canvas-text: #1a1a16;
-      --legibility-shadow: 0 0 5px rgba(255,255,255,0.95), 0 0 9px rgba(255,255,255,0.85), 0 1px 2px rgba(255,255,255,0.95);
+      /* NORNA Visual System — paleta oficial */
+      --ink:    #16160e;
+      --forest: #20281c;
+      --lime:   #c8e63e;
+      --cream:  #f0ede5;
+      --sage:   #a8b08a;
+      --earth:  #8b7355;
 
-      /* Type scale — tweak --fs-scale to resize all text proportionally */
+      /* Aliases funcionales */
+      --nk:          var(--cream);
+      --text:        var(--ink);
+      --muted:       var(--earth);
+      --muted-sage:  var(--sage);
+      --on-lime:     var(--ink);
+      --lime-dim:    rgba(200,230,62,0.13);
+      --lime-border: rgba(200,230,62,0.45);
+      --line:        rgba(168,176,138,0.28);
+      --line-solid:  #dddbd5;
+      --panel-bg:    rgba(255,255,255,0.80);
+      --panel-blur:  blur(22px);
+      --canvas-bg:   #e8e4da;
+      --canvas-line: rgba(22,22,14,0.20);
+      --canvas-muted: rgba(22,22,14,0.80);
+      --canvas-text: var(--ink);
+      --legibility-shadow: 0 0 6px rgba(240,237,229,0.97), 0 0 12px rgba(240,237,229,0.85), 0 1px 2px rgba(240,237,229,0.97);
+
+      /* Glassmorphism card */
+      --glass-bg:     rgba(255,255,255,0.72);
+      --glass-border: rgba(168,176,138,0.35);
+      --glass-shadow: 0 8px 32px rgba(22,22,14,0.10), 0 1px 0 rgba(255,255,255,0.6) inset;
+
+      /* Type scale */
       --fs-scale: 1;
-      --fs-2xs: calc(0.6rem * var(--fs-scale));
-      --fs-xs: calc(0.68rem * var(--fs-scale));
-      --fs-sm: calc(0.75rem * var(--fs-scale));
-      --fs-base: calc(0.82rem * var(--fs-scale));
-      --fs-md: calc(0.95rem * var(--fs-scale));
-      --fs-lg: calc(1.1rem * var(--fs-scale));
-      --fs-xl: calc(1.3rem * var(--fs-scale));
+      --fs-2xs: calc(0.58rem * var(--fs-scale));
+      --fs-xs:  calc(0.67rem * var(--fs-scale));
+      --fs-sm:  calc(0.75rem * var(--fs-scale));
+      --fs-base:calc(0.82rem * var(--fs-scale));
+      --fs-md:  calc(0.95rem * var(--fs-scale));
+      --fs-lg:  calc(1.1rem  * var(--fs-scale));
+      --fs-xl:  calc(1.3rem  * var(--fs-scale));
       --fs-icon-sm: calc(1.1rem * var(--fs-scale));
       --fs-icon-lg: calc(1.4rem * var(--fs-scale));
     }
@@ -47,9 +65,10 @@
     @keyframes fadeIn { to { opacity: 1; } }
 
     body {
-      background: var(--nk);
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      color: var(--text);
+      background: var(--cream);
+      font-family: 'DM Sans', system-ui, sans-serif;
+      font-weight: 300;
+      color: var(--ink);
       overflow: hidden;
       display: flex;
       height: 100vh;
@@ -60,7 +79,7 @@
       flex: 1;
       position: relative;
       overflow: hidden;
-      background: var(--canvas-bg);
+      background: #e6e2d8;
     }
 
     #canvas-container {
@@ -80,37 +99,41 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 12px;
+      gap: 16px;
       text-align: center;
-      color: var(--canvas-muted);
+      color: var(--earth);
     }
     body.pre-sim #sim-placeholder {
       display: flex;
     }
     #sim-placeholder-icon {
-      font-size: 2.6rem;
-      opacity: 0.6;
+      font-size: 3rem;
+      opacity: 0.5;
     }
     #sim-placeholder-text {
       font-size: var(--fs-md);
-      max-width: 320px;
-      line-height: 1.5;
+      max-width: 300px;
+      line-height: 1.7;
+      color: var(--earth);
+      font-weight: 300;
+      letter-spacing: 0.01em;
     }
 
     /* ── Bottom timeline ── */
     #timeline-bar {
       position: absolute;
       bottom: 0; left: 0; right: 0;
-      background: linear-gradient(to top, rgba(228,230,225,0.97) 62%, transparent);
+      background: linear-gradient(to top, rgba(240,237,229,0.97) 65%, transparent);
       padding: 14px 24px 20px;
     }
 
     #stage-title {
+      font-family: 'Syne', sans-serif;
       font-size: var(--fs-xl);
-      font-weight: 700;
-      color: #3a4f0e;
+      font-weight: 800;
+      color: var(--forest);
       text-align: center;
-      letter-spacing: 0.5px;
+      letter-spacing: -0.02em;
       margin-bottom: 2px;
       text-shadow: var(--legibility-shadow);
     }
@@ -122,11 +145,12 @@
       gap: 12px;
       margin-bottom: 10px;
       font-size: var(--fs-sm);
-      color: var(--canvas-muted);
+      color: var(--earth);
       text-shadow: var(--legibility-shadow);
+      font-weight: 300;
     }
 
-    #stage-days { color: #3a4f0e; font-weight: 600; text-shadow: var(--legibility-shadow); }
+    #stage-days { color: var(--forest); font-weight: 500; text-shadow: var(--legibility-shadow); }
 
     #timeline-content {
       width: fit-content;
@@ -146,38 +170,40 @@
       align-items: center;
       cursor: pointer;
       padding: 6px 8px;
-      border-radius: 6px;
-      border: none;
+      border-radius: 8px;
+      border: 1px solid transparent;
       background: transparent;
-      color: var(--canvas-muted);
+      color: var(--earth);
       min-width: 76px;
       transition: all 0.2s;
       text-shadow: var(--legibility-shadow);
+      font-family: 'DM Sans', sans-serif;
     }
-    .stage-btn:hover { background: var(--lime-dim); color: var(--canvas-text); }
-    .stage-btn.active { background: var(--lime-dim); color: #3a4f0e; border: 1px solid var(--lime-border); }
+    .stage-btn:hover { background: var(--lime-dim); color: var(--forest); border-color: var(--lime-border); }
+    .stage-btn.active { background: var(--lime-dim); color: var(--forest); border: 1px solid var(--lime-border); }
 
     .s-icon { font-size: var(--fs-icon-sm); margin-bottom: 2px; }
-    .s-label { font-size: var(--fs-2xs); font-weight: 600; text-align: center; line-height: 1.2; }
-    .s-days { font-size: var(--fs-2xs); color: var(--canvas-muted); margin-top: 2px; }
-    .stage-btn.active .s-days { color: #3a4f0e; opacity: 1; }
+    .s-label { font-size: var(--fs-2xs); font-weight: 500; text-align: center; line-height: 1.2; letter-spacing: 0.03em; }
+    .s-days { font-size: var(--fs-2xs); color: var(--earth); margin-top: 2px; opacity: 0.75; }
+    .stage-btn.active .s-days { color: var(--forest); opacity: 1; }
 
-    .connector { width: 16px; height: 1px; background: var(--canvas-line); flex-shrink: 0; transition: background 0.4s; }
-    .connector.passed { background: var(--lime); opacity: 0.9; }
+    .connector { width: 16px; height: 1px; background: rgba(168,176,138,0.4); flex-shrink: 0; transition: background 0.4s; }
+    .connector.passed { background: var(--lime); opacity: 1; }
 
     .nav-btn {
       background: rgba(255,255,255,0.65);
-      border: 1px solid var(--canvas-line);
-      color: var(--canvas-muted);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      color: var(--earth);
       width: 34px; height: 34px;
       flex-shrink: 0;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
       font-size: var(--fs-base);
       display: flex; align-items: center; justify-content: center;
       transition: all 0.2s;
     }
-    .nav-btn:hover, .nav-btn.on { border-color: var(--lime); color: #4a6312; background: var(--lime-dim); }
+    .nav-btn:hover, .nav-btn.on { border-color: var(--lime); color: var(--forest); background: var(--lime-dim); }
 
     /* ── Stage slider (replaces nav controls) ── */
     #stage-slider-row {
@@ -233,8 +259,11 @@
     /* ── Right panel ── */
     #right-panel {
       width: 360px;
-      background: var(--forest);
-      border-right: 1px solid var(--line);
+      background: rgba(255,255,255,0.97);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-right: 1px solid rgba(168,176,138,0.30);
+      box-shadow: 2px 0 28px rgba(22,22,14,0.10);
       display: flex;
       flex-direction: column;
       gap: 0;
@@ -242,27 +271,29 @@
     }
 
     #logo-wrap {
-      padding: 16px 16px 0 16px;
+      padding: 18px 18px 14px 18px;
       display: flex;
       align-items: center;
+      border-bottom: 1px solid rgba(168,176,138,0.18);
     }
 
     #logo-img {
-      height: 40px;
+      height: 36px;
       width: auto;
       object-fit: contain;
     }
 
     .panel-section {
-      border-bottom: 1px solid var(--line);
-      padding: 16px;
+      border-bottom: 1px solid rgba(168,176,138,0.18);
+      padding: 14px 16px;
     }
 
     .section-label {
+      font-family: 'DM Sans', sans-serif;
       font-size: var(--fs-2xs);
-      letter-spacing: 2px;
-      color: var(--muted);
-      font-weight: 700;
+      letter-spacing: 0.18em;
+      color: var(--earth);
+      font-weight: 500;
       margin-bottom: 10px;
       text-transform: uppercase;
     }
@@ -270,22 +301,22 @@
     /* Map */
     #map-preview-wrap {
       position: relative;
-      height: 160px;
-      border-radius: 6px;
+      height: 150px;
+      border-radius: 10px;
       overflow: hidden;
-      border: 1px solid var(--line);
+      border: 1px solid var(--glass-border);
       margin-bottom: 8px;
       cursor: pointer;
     }
     #map {
-      height: 160px;
+      height: 150px;
       pointer-events: none;
     }
     #map-mask {
       position: absolute;
       inset: 0;
       pointer-events: none;
-      background: radial-gradient(ellipse 55% 55% at 50% 50%, transparent 35%, rgba(250,250,248,0.55) 60%, rgba(250,250,248,0.92) 85%);
+      background: radial-gradient(ellipse 55% 55% at 50% 50%, transparent 35%, rgba(240,237,229,0.48) 60%, rgba(240,237,229,0.90) 85%);
       z-index: 5;
     }
     #map-preview-overlay {
@@ -294,14 +325,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(255,255,255,0);
-      color: var(--text);
+      background: rgba(240,237,229,0.5);
+      color: var(--forest);
       font-size: var(--fs-sm);
-      font-weight: 700;
-      letter-spacing: 0.5px;
+      font-weight: 500;
+      letter-spacing: 0.03em;
       opacity: 0;
       transition: all 0.2s;
-      background: rgba(255,255,255,0.55);
     }
     #map-preview-wrap:hover #map-preview-overlay { opacity: 1; }
 
@@ -310,7 +340,8 @@
       display: flex;
       position: fixed;
       inset: 0;
-      background: rgba(10,20,16,0.55);
+      background: rgba(22,22,14,0.50);
+      backdrop-filter: blur(4px);
       z-index: 100;
       align-items: center;
       justify-content: center;
@@ -324,69 +355,77 @@
     #map-dialog {
       width: min(720px, 90vw);
       height: min(560px, 80vh);
-      background: var(--forest);
-      border-radius: 10px;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+      box-shadow: 0 24px 64px rgba(22,22,14,0.28);
     }
     #map-dialog-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 14px 18px;
-      border-bottom: 1px solid var(--line);
+      border-bottom: 1px solid rgba(168,176,138,0.2);
+      font-family: 'Syne', sans-serif;
       font-size: var(--fs-sm);
       font-weight: 700;
-      letter-spacing: 0.5px;
-      color: var(--text);
+      letter-spacing: 0.01em;
+      color: var(--ink);
     }
     #map-dialog-header button {
       background: transparent;
       border: none;
-      color: var(--muted);
+      color: var(--earth);
       font-size: var(--fs-md);
       cursor: pointer;
       line-height: 1;
+      transition: color 0.2s;
     }
-    #map-dialog-header button:hover { color: var(--text); }
+    #map-dialog-header button:hover { color: var(--ink); }
     #map-big-wrap { flex: 1; position: relative; }
     #map-big { position: absolute; inset: 0; }
     #map-big-mask {
       position: absolute;
       inset: 0;
       pointer-events: none;
-      background: radial-gradient(ellipse 50% 50% at 50% 50%, transparent 30%, rgba(250,250,248,0.45) 55%, rgba(250,250,248,0.88) 80%);
+      background: radial-gradient(ellipse 50% 50% at 50% 50%, transparent 30%, rgba(240,237,229,0.38) 55%, rgba(240,237,229,0.82) 80%);
       z-index: 400;
     }
     #map-dialog-hint {
       padding: 8px 18px;
       font-size: var(--fs-xs);
-      color: var(--muted);
-      border-top: 1px solid var(--line);
+      color: var(--earth);
+      border-top: 1px solid rgba(168,176,138,0.2);
+      font-weight: 300;
     }
 
     #coord-display {
       font-size: var(--fs-xs);
-      color: #4a6312;
-      font-family: monospace;
-      background: rgba(200,230,62,0.06);
+      color: var(--forest);
+      font-family: 'DM Sans', monospace;
+      font-weight: 500;
+      background: var(--lime-dim);
       border: 1px solid var(--lime-border);
-      border-radius: 4px;
-      padding: 5px 8px;
+      border-radius: 6px;
+      padding: 5px 10px;
       margin-bottom: 6px;
+      letter-spacing: 0.04em;
     }
 
     #location-name {
       font-size: var(--fs-xs);
-      color: var(--muted);
+      color: var(--earth);
+      font-weight: 300;
     }
 
     /* DNA Upload */
     #dna-drop {
-      border: 1px dashed #9bb37a;
-      border-radius: 6px;
+      border: 1px dashed rgba(168,176,138,0.6);
+      border-radius: 10px;
       padding: 14px;
       text-align: center;
       cursor: pointer;
@@ -396,25 +435,26 @@
       overflow: hidden;
       box-sizing: border-box;
       min-height: 76px;
+      background: rgba(240,237,229,0.5);
     }
     #dna-drop:hover { border-color: var(--lime); background: var(--lime-dim); }
 
     .dna-icon { font-size: var(--fs-icon-lg); margin-bottom: 4px; }
-    .dna-title { font-size: var(--fs-sm); font-weight: 600; color: #4a6312; margin-bottom: 2px; }
-    .dna-hint { font-size: var(--fs-2xs); color: var(--muted); }
-    .dna-error { font-size: var(--fs-2xs); color: #e0594f; margin-top: 4px; display: none; }
+    .dna-title { font-size: var(--fs-sm); font-weight: 500; color: var(--forest); margin-bottom: 2px; }
+    .dna-hint { font-size: var(--fs-2xs); color: var(--earth); font-weight: 300; letter-spacing: 0.06em; text-transform: uppercase; }
+    .dna-error { font-size: var(--fs-2xs); color: #c0392b; margin-top: 4px; display: none; }
     .dna-error.show { display: block; }
 
     #dna-badge {
       display: none;
       align-items: center;
-      gap: 8px;
-      background: rgba(200,230,62,0.08);
+      gap: 10px;
+      background: var(--lime-dim);
       border: 1px solid var(--lime-border);
-      border-radius: 6px;
-      padding: 14px 10px;
+      border-radius: 10px;
+      padding: 12px 12px;
       font-size: var(--fs-xs);
-      color: var(--lime);
+      color: var(--forest);
       box-sizing: border-box;
       min-height: 76px;
       margin-bottom: 10px;
@@ -425,28 +465,35 @@
     /* Simulate button */
     #sim-btn {
       width: 100%;
-      padding: 12px;
-      background: var(--lime);
-      color: var(--on-lime);
+      padding: 12px 16px;
+      background: var(--ink);
+      color: var(--lime);
       border: none;
-      border-radius: 6px;
-      font-size: var(--fs-base);
-      font-weight: 700;
+      border-radius: 10px;
+      font-family: 'Syne', sans-serif;
+      font-size: var(--fs-sm);
+      font-weight: 800;
       cursor: pointer;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
       transition: all 0.2s;
       position: relative;
       overflow: hidden;
     }
-    #sim-btn:hover { background: #d8f050; }
-    #sim-btn:disabled { background: #3a4828; color: #5a6840; cursor: not-allowed; }
+    #sim-btn:hover { background: var(--forest); }
+    #sim-btn:disabled {
+      background: rgba(22,22,14,0.06);
+      color: rgba(139,115,85,0.38);
+      cursor: not-allowed;
+      border: 1px dashed rgba(168,176,138,0.35);
+    }
 
     /* Loading overlay on button */
     #sim-btn .btn-loading {
       display: none;
       position: absolute;
       inset: 0;
-      background: var(--lime);
+      background: var(--ink);
       align-items: center;
       justify-content: center;
       gap: 8px;
@@ -456,7 +503,7 @@
 
     .spin {
       width: 14px; height: 14px;
-      border: 2px solid var(--on-lime);
+      border: 2px solid var(--lime);
       border-top-color: transparent;
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
@@ -468,62 +515,129 @@
     #sim-row #sim-btn { flex: 1; }
     #hist-btn {
       width: 44px; flex-shrink: 0;
-      background: var(--lime-dim);
-      border: 1px solid var(--lime-border);
-      border-radius: 6px;
+      background: rgba(22,22,14,0.06);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      font-size: 1.1rem; color: #4a6312;
+      font-size: 1.1rem; color: var(--earth);
       transition: all 0.2s; position: relative;
     }
-    #hist-btn:hover, #hist-btn.open { background: rgba(196,232,50,0.28); border-color: var(--lime); }
+    #hist-btn:hover, #hist-btn.open { background: var(--lime-dim); border-color: var(--lime-border); color: var(--forest); }
     #hist-tooltip {
       display: none;
       position: absolute;
-      bottom: calc(100% + 8px); right: 0;
-      width: 310px;
-      background: var(--panel-bg);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      box-shadow: 0 4px 18px rgba(0,0,0,0.13);
+      top: calc(100% + 4px); left: 0;
+      width: 340px;
+      background: rgba(255,255,255,0.96);
+      backdrop-filter: blur(18px);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(22,22,14,0.14);
       z-index: 9999; overflow: hidden;
+    }
+    #hist-tooltip .hist-items-wrap {
+      max-height: 220px;
+      overflow-y: auto;
     }
     #hist-tooltip.show { display: block; }
     .hist-header {
       padding: 9px 12px 7px;
-      font-size: var(--fs-xs); font-weight: 700;
-      color: var(--muted); letter-spacing: 0.6px;
-      border-bottom: 1px solid var(--line);
+      font-family: 'DM Sans', sans-serif;
+      font-size: var(--fs-2xs); font-weight: 500;
+      color: var(--earth); letter-spacing: 0.15em;
+      border-bottom: 1px solid rgba(168,176,138,0.18);
       text-transform: uppercase;
     }
     .hist-item {
       display: flex; align-items: center; gap: 10px;
-      padding: 9px 12px; cursor: pointer;
+      padding: 10px 12px; cursor: pointer;
       transition: background 0.15s;
-      border-bottom: 1px solid var(--line);
+      border-bottom: 1px solid rgba(168,176,138,0.14);
     }
     .hist-item:last-child { border-bottom: none; }
     .hist-item:hover { background: var(--lime-dim); }
-    .hist-item.active { background: rgba(196,232,50,0.12); }
-    .hist-icon { font-size: 1.25rem; flex-shrink: 0; }
-    .hist-info { flex: 1; min-width: 0; }
-    .hist-name { font-size: var(--fs-xs); font-weight: 700; color: #4a6312; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .hist-meta { font-size: var(--fs-2xs); color: var(--muted); margin-top: 1px; }
+    .hist-item.active { background: rgba(200,230,62,0.10); }
+    .hist-icon { font-size: 1.15rem; flex-shrink: 0; line-height: 1; }
+    .hist-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .hist-name { display: block; font-size: var(--fs-xs); font-weight: 500; color: var(--forest); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hist-meta { display: block; font-size: var(--fs-2xs); color: var(--earth); font-weight: 300; }
     .hist-badge {
-      font-size: var(--fs-2xs); font-weight: 700;
+      font-size: var(--fs-2xs); font-weight: 500;
       background: var(--lime-dim); border: 1px solid var(--lime-border);
-      color: #4a6312; padding: 2px 6px; border-radius: 10px; white-space: nowrap; flex-shrink: 0;
+      color: var(--forest); padding: 2px 7px; border-radius: 999px; white-space: nowrap;
+      flex-shrink: 0; align-self: flex-start;
     }
 
     /* Model info */
     #model-info {
       flex: 1;
-      padding: 16px;
+      padding: 14px 16px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
       overflow-y: auto;
     }
+
+    /* ── Environmental sliders panel ── */
+    .env-s-item {
+      display: grid;
+      grid-template-columns: 22px 70px 1fr 60px;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(168,176,138,0.15);
+    }
+    .env-s-item:last-child { border-bottom: none; }
+
+    .env-s-icon { font-size: 1rem; line-height: 1; text-align: center; }
+    .env-s-label { font-size: 10px; font-weight: 500; color: var(--earth); letter-spacing: 0.07em; text-transform: uppercase; }
+    .env-s-val-unit { font-size: 11px; font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+    .env-s-val-unit .env-s-unit { font-weight: 300; color: var(--earth); font-size: 10px; }
+
+    input.v-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 7px;
+      border-radius: 4px;
+      outline: none;
+      cursor: pointer;
+      flex-shrink: 0;
+      background: linear-gradient(to right, var(--slider-fill, #c4e832) 0%, var(--slider-fill, #c4e832) var(--pct, 50%), var(--line) var(--pct, 50%), var(--line) 100%);
+    }
+    input.v-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 17px; height: 17px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid var(--slider-fill, #c4e832);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.22);
+      cursor: pointer;
+    }
+    input.v-slider::-moz-range-thumb {
+      width: 17px; height: 17px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid var(--slider-fill, #c4e832);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.22);
+      cursor: pointer;
+    }
+    input.v-slider.stress { --slider-fill: #ef4444; }
+    input.v-slider.warn   { --slider-fill: #f59e0b; }
+    input.v-slider.good   { --slider-fill: #c4e832; }
+
+    /* Env tint overlay */
+    #env-tint {
+      position: absolute; inset: 0;
+      pointer-events: none; z-index: 3;
+      transition: background 0.9s ease;
+    }
+
+    /* Table value color states */
+    .info-val.val-good { color: #3a6b0e !important; }
+    .info-val.val-warn { color: #a3540a !important; }
+    .info-val.val-bad  { color: #c0302a !important; }
 
     .info-row {
       display: flex;
@@ -531,11 +645,11 @@
       align-items: center;
       font-size: var(--fs-xs);
       padding: 5px 0;
-      border-bottom: 1px solid var(--line);
+      border-bottom: 1px solid rgba(168,176,138,0.15);
     }
-    .info-key { color: var(--muted); }
-    .info-val { color: var(--text); font-weight: 600; font-family: monospace; }
-    .info-val.lime { color: #4a6312; }
+    .info-key { color: var(--earth); font-weight: 300; }
+    .info-val { color: var(--ink); font-weight: 500; font-family: 'DM Sans', sans-serif; }
+    .info-val.lime { color: var(--forest); }
 
     #status-dot {
       width: 7px; height: 7px;
@@ -557,16 +671,17 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
-      width: 320px;
+      width: 420px;
     }
 
     .float-card {
-      background: var(--panel-bg);
-      backdrop-filter: blur(10px);
-      border: 1px solid var(--line);
-      border-radius: 10px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
       padding: 12px 14px;
-      box-shadow: 0 8px 24px rgba(20,24,18,0.12);
+      box-shadow: var(--glass-shadow);
       opacity: 0;
       transform: translateY(-10px) translateX(10px);
       pointer-events: none;
@@ -578,11 +693,99 @@
       pointer-events: auto;
     }
 
-    .float-label {
-      font-size: var(--fs-2xs);
-      letter-spacing: 1.5px;
-      color: var(--muted);
+    /* ── Plant warning badges ── */
+    #plant-warnings {
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 6px;
+      z-index: 8;
+      pointer-events: none;
+      max-width: 700px;
+    }
+    .warn-badge {
+      background: rgba(220, 38, 38, 0.88);
+      color: #fff;
+      font-size: var(--fs-xs);
       font-weight: 700;
+      padding: 5px 10px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 2px 10px rgba(220,38,38,0.45);
+      opacity: 0;
+      transform: translateY(-8px) scale(0.9);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      backdrop-filter: blur(6px);
+      animation: none;
+    }
+    .warn-badge.active {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      animation: warnPulse 2s ease-in-out infinite;
+    }
+    .warn-badge.warn-yellow {
+      background: rgba(180, 83, 9, 0.88);
+      box-shadow: 0 2px 10px rgba(180,83,9,0.45);
+    }
+    @keyframes warnPulse {
+      0%, 100% { box-shadow: 0 2px 10px rgba(220,38,38,0.45); }
+      50%       { box-shadow: 0 4px 18px rgba(220,38,38,0.80); }
+    }
+    .warn-badge.warn-yellow { animation-name: warnPulseYellow; }
+    @keyframes warnPulseYellow {
+      0%, 100% { box-shadow: 0 2px 10px rgba(180,83,9,0.45); }
+      50%       { box-shadow: 0 4px 18px rgba(180,83,9,0.80); }
+    }
+
+    /* Health bar overlay */
+    #health-bar-wrap {
+      position: absolute;
+      bottom: 72px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 220px;
+      z-index: 8;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+    #health-bar-wrap.show { opacity: 1; }
+    #health-bar-label {
+      font-size: var(--fs-2xs);
+      font-weight: 700;
+      color: var(--canvas-muted);
+      text-align: center;
+      margin-bottom: 4px;
+      text-shadow: var(--legibility-shadow);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    #health-bar-track {
+      width: 100%;
+      height: 6px;
+      background: rgba(0,0,0,0.15);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    #health-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.8s ease, background-color 0.8s ease;
+      background: #c4e832;
+    }
+
+    .float-label {
+      font-family: 'DM Sans', sans-serif;
+      font-size: var(--fs-2xs);
+      letter-spacing: 0.14em;
+      color: var(--earth);
+      font-weight: 500;
       margin-bottom: 8px;
       text-transform: uppercase;
     }
@@ -598,13 +801,14 @@
       position: absolute;
       left: 32px;
       z-index: 20;
-      width: 300px;
-      background: var(--panel-bg);
-      backdrop-filter: blur(10px);
-      border: 1px solid var(--line);
-      border-radius: 10px;
+      width: 400px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
       padding: 12px 14px;
-      box-shadow: 0 8px 24px rgba(20,24,18,0.12);
+      box-shadow: var(--glass-shadow);
       opacity: 0;
       transform: translateX(-10px);
       pointer-events: none;
@@ -618,7 +822,7 @@
     #panel-environment.visible { transition-delay: 0.08s; }
     #panel-combined.visible { transition-delay: 0.16s; }
 
-    /* Triangle pointer on the left edge, like a speech-bubble tooltip */
+    /* Triangle pointer on the left edge */
     .canvas-tooltip::after {
       content: '';
       position: absolute;
@@ -628,8 +832,8 @@
       height: 0;
       border-top: 9px solid transparent;
       border-bottom: 9px solid transparent;
-      border-right: 9px solid #ffffff;
-      filter: drop-shadow(-2px 0 2px rgba(20,24,18,0.08));
+      border-right: 9px solid rgba(255,255,255,0.72);
+      filter: drop-shadow(-2px 0 2px rgba(22,22,14,0.06));
     }
 
     #panel-genetic { top: 90px; }
@@ -660,23 +864,24 @@
 
     #gene-editor-btn {
       width: 100%;
-      background: transparent;
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      color: #4a6312;
+      background: rgba(22,22,14,0.05);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      color: var(--forest);
+      font-family: 'DM Sans', sans-serif;
       font-size: var(--fs-sm);
-      font-weight: 600;
-      padding: 9px 12px;
+      font-weight: 400;
+      padding: 10px 14px;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 8px;
       transition: background 0.2s, border-color 0.2s;
+      letter-spacing: 0.01em;
     }
     #gene-editor-btn:hover { background: var(--lime-dim); border-color: var(--lime-border); }
 
     /* Norna gene editor scoped styles */
-    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap');
     .norna-ge {
       font-family: 'DM Sans', system-ui, sans-serif;
       font-weight: 300;
@@ -800,7 +1005,7 @@
     </div>
 
     <!-- Simulate -->
-    <div class="panel-section">
+    <div class="panel-section" style="position:relative">
       <div class="section-label">Simulación Fenológica</div>
       <div id="sim-row">
         <button id="sim-btn" onclick="runSimulation()" disabled>
@@ -810,52 +1015,52 @@
             <span style="font-size:var(--fs-sm);font-weight:700;color:var(--on-lime)">Cargando modelo...</span>
           </span>
         </button>
-        <button id="hist-btn" onclick="toggleHistTooltip(event)" title="Historial de simulaciones">
-          🕰
-          <div id="hist-tooltip">
-            <div class="hist-header">Historial de simulaciones</div>
-            <div class="hist-item active" onclick="loadHistItem(0,event)">
-              <span class="hist-icon">🌾</span>
-              <span class="hist-info">
-                <span class="hist-name">trigo_cepa_toledo.vcf</span>
-                <span class="hist-meta">38.4 KB · Toledo, España · hace 2 min</span>
-              </span>
-              <span class="hist-badge">Floración</span>
-            </div>
-            <div class="hist-item" onclick="loadHistItem(1,event)">
-              <span class="hist-icon">🍅</span>
-              <span class="hist-info">
-                <span class="hist-name">tomate_cepa_lavega_2026.vcf</span>
-                <span class="hist-meta">12.1 KB · La Vega, Madrid · ayer</span>
-              </span>
-              <span class="hist-badge">Cuajado</span>
-            </div>
-            <div class="hist-item" onclick="loadHistItem(2,event)">
-              <span class="hist-icon">🌽</span>
-              <span class="hist-info">
-                <span class="hist-name">maiz_hibrido_v3.vcf</span>
-                <span class="hist-meta">54.7 KB · Valladolid · hace 3 días</span>
-              </span>
-              <span class="hist-badge">Elongación</span>
-            </div>
-            <div class="hist-item" onclick="loadHistItem(3,event)">
-              <span class="hist-icon">🌿</span>
-              <span class="hist-info">
-                <span class="hist-name">lechuga_var_batavia.vcf</span>
-                <span class="hist-meta">8.9 KB · Île-de-France · hace 5 días</span>
-              </span>
-              <span class="hist-badge">Roseta</span>
-            </div>
-            <div class="hist-item" onclick="loadHistItem(4,event)">
-              <span class="hist-icon">🫑</span>
-              <span class="hist-info">
-                <span class="hist-name">pimiento_lamuyo_s2.vcf</span>
-                <span class="hist-meta">21.3 KB · Almería · hace 1 semana</span>
-              </span>
-              <span class="hist-badge">Germinación</span>
-            </div>
+        <button id="hist-btn" onclick="toggleHistTooltip(event)" title="Historial de simulaciones">🕰</button>
+      </div>
+      <div id="hist-tooltip">
+        <div class="hist-header">Historial de simulaciones</div>
+        <div class="hist-items-wrap">
+          <div class="hist-item active" onclick="loadHistItem(0,event)">
+            <span class="hist-icon">🌾</span>
+            <span class="hist-info">
+              <span class="hist-name">trigo_cepa_toledo.vcf</span>
+              <span class="hist-meta">38.4 KB · Toledo, España · hace 2 min</span>
+            </span>
+            <span class="hist-badge">Floración</span>
           </div>
-        </button>
+          <div class="hist-item" onclick="loadHistItem(1,event)">
+            <span class="hist-icon">🍅</span>
+            <span class="hist-info">
+              <span class="hist-name">tomate_cepa_lavega_2026.vcf</span>
+              <span class="hist-meta">12.1 KB · La Vega, Madrid · ayer</span>
+            </span>
+            <span class="hist-badge">Cuajado</span>
+          </div>
+          <div class="hist-item" onclick="loadHistItem(2,event)">
+            <span class="hist-icon">🌽</span>
+            <span class="hist-info">
+              <span class="hist-name">maiz_hibrido_v3.vcf</span>
+              <span class="hist-meta">54.7 KB · Valladolid · hace 3 días</span>
+            </span>
+            <span class="hist-badge">Elongación</span>
+          </div>
+          <div class="hist-item" onclick="loadHistItem(3,event)">
+            <span class="hist-icon">🌿</span>
+            <span class="hist-info">
+              <span class="hist-name">lechuga_var_batavia.vcf</span>
+              <span class="hist-meta">8.9 KB · Île-de-France · hace 5 días</span>
+            </span>
+            <span class="hist-badge">Roseta</span>
+          </div>
+          <div class="hist-item" onclick="loadHistItem(4,event)">
+            <span class="hist-icon">🫑</span>
+            <span class="hist-info">
+              <span class="hist-name">pimiento_lamuyo_s2.vcf</span>
+              <span class="hist-meta">21.3 KB · Almería · hace 1 semana</span>
+            </span>
+            <span class="hist-badge">Germinación</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -866,11 +1071,11 @@
         <span class="info-key">Estado</span>
         <span class="info-val lime"><span id="status-dot"></span><span id="model-status">En espera</span></span>
       </div>
-      <div class="info-row">
+      <div class="info-row" id="row-stage" style="display:none">
         <span class="info-key">Etapa actual</span>
         <span class="info-val" id="info-stage">—</span>
       </div>
-      <div class="info-row">
+      <div class="info-row" id="row-days" style="display:none">
         <span class="info-key">Días acumulados</span>
         <span class="info-val" id="info-days">—</span>
       </div>
@@ -972,8 +1177,28 @@
 
   <!-- ── Right: 3D canvas ── -->
   <div id="canvas-wrap">
+    <canvas id="particles-canvas" style="position:absolute;inset:0;pointer-events:none;z-index:5;"></canvas>
+    <div id="env-tint"></div>
     <div id="top-bar"><div id="top-bar-fill"></div></div>
     <div id="canvas-container"></div>
+
+    <!-- Warning badges — appear at top-center when conditions are dangerous -->
+    <div id="plant-warnings">
+      <div class="warn-badge" id="warn-frost">❄️ Helada · T&lt;8°C</div>
+      <div class="warn-badge" id="warn-heat">🔥 Golpe de calor</div>
+      <div class="warn-badge" id="warn-drought">🏜️ Estrés hídrico severo</div>
+      <div class="warn-badge warn-yellow" id="warn-fungus">🍄 Riesgo Botrytis</div>
+      <div class="warn-badge warn-yellow" id="warn-nitrogen">🌿 Déficit de nitrógeno</div>
+      <div class="warn-badge" id="warn-wind">💨 Riesgo de encamado</div>
+      <div class="warn-badge warn-yellow" id="warn-radiation">☀️ Fotoinhibición</div>
+    </div>
+
+    <!-- Plant health bar — visible when stress > 20% -->
+    <div id="health-bar-wrap">
+      <div id="health-bar-label">Salud de la planta</div>
+      <div id="health-bar-track"><div id="health-bar-fill"></div></div>
+    </div>
+
     <div id="sim-placeholder">
       <div id="sim-placeholder-icon">🌾</div>
       <div id="sim-placeholder-text">Carga el genoma e indica la ubicación del campo<br>para iniciar la simulación</div>
@@ -1031,6 +1256,53 @@
 
     <!-- Ventana flotante de resultado combinado — arriba a la derecha de la pantalla -->
     <div id="analysis-floating">
+      <!-- Environmental sliders float card -->
+      <div class="float-card" id="panel-env-sliders">
+        <div class="float-label">🌿 Entorno simulado</div>
+
+        <div class="env-s-item" id="esi-radiacion">
+          <div class="env-s-icon">☀️</div>
+          <div class="env-s-label">Radiación</div>
+          <input class="v-slider good" type="range" id="sl-radiacion" min="2" max="30" value="16" step="0.5" oninput="onEnvSlider('radiacion', this.value)">
+          <div class="env-s-val-unit"><span id="sl-radiacion-val">16</span> <span class="env-s-unit">MJ/m²/d</span></div>
+        </div>
+
+        <div class="env-s-item" id="esi-precipitacion">
+          <div class="env-s-icon">🌧️</div>
+          <div class="env-s-label">Precipit.</div>
+          <input class="v-slider good" type="range" id="sl-precipitacion" min="0" max="80" value="15" step="1" oninput="onEnvSlider('precipitacion', this.value)">
+          <div class="env-s-val-unit"><span id="sl-precipitacion-val">15</span> <span class="env-s-unit">mm/sem</span></div>
+        </div>
+
+        <div class="env-s-item" id="esi-temperatura">
+          <div class="env-s-icon">🌡️</div>
+          <div class="env-s-label">Temp.</div>
+          <input class="v-slider good" type="range" id="sl-temperatura" min="5" max="42" value="20" step="0.5" oninput="onEnvSlider('temperatura', this.value)">
+          <div class="env-s-val-unit"><span id="sl-temperatura-val">20</span> <span class="env-s-unit">°C</span></div>
+        </div>
+
+        <div class="env-s-item" id="esi-humedad">
+          <div class="env-s-icon">💧</div>
+          <div class="env-s-label">Humedad</div>
+          <input class="v-slider good" type="range" id="sl-humedad" min="20" max="100" value="60" step="1" oninput="onEnvSlider('humedad', this.value)">
+          <div class="env-s-val-unit"><span id="sl-humedad-val">60</span> <span class="env-s-unit">% HR</span></div>
+        </div>
+
+        <div class="env-s-item" id="esi-viento">
+          <div class="env-s-icon">💨</div>
+          <div class="env-s-label">Viento</div>
+          <input class="v-slider good" type="range" id="sl-viento" min="0" max="15" value="3" step="0.5" oninput="onEnvSlider('viento', this.value)">
+          <div class="env-s-val-unit"><span id="sl-viento-val">3</span> <span class="env-s-unit">m/s</span></div>
+        </div>
+
+        <div class="env-s-item" id="esi-nitrogeno">
+          <div class="env-s-icon">🌱</div>
+          <div class="env-s-label">Nitrógeno</div>
+          <input class="v-slider good" type="range" id="sl-nitrogeno" min="0" max="250" value="80" step="5" oninput="onEnvSlider('nitrogeno', this.value)">
+          <div class="env-s-val-unit"><span id="sl-nitrogeno-val">80</span> <span class="env-s-unit">kg N/ha</span></div>
+        </div>
+      </div>
+
       <div class="float-card" id="panel-combined">
         <div class="float-label">⚡ Resultado combinado</div>
         <div class="info-row">
@@ -1212,11 +1484,14 @@
         btn.classList.remove('loading');
         btn.disabled = false;
         btn.innerHTML = '<span class="btn-text">✓ MODELO CARGADO</span>';
-        btn.style.background = 'var(--line)';
-        btn.style.color = '#5c7a18';
+        btn.style.background = 'var(--lime-dim)';
+        btn.style.color = 'var(--forest)';
         btn.style.border = '1px solid var(--lime-border)';
+        btn.style.fontFamily = "'Syne', sans-serif";
         btn.style.cursor = 'default';
         document.getElementById('model-status').textContent = 'Activo';
+        document.getElementById('row-stage').style.display = '';
+        document.getElementById('row-days').style.display = '';
         simDone = true;
         document.body.classList.remove('pre-sim');
         if (window.__wheatResize) window.__wheatResize();
@@ -1255,7 +1530,8 @@
       document.getElementById('comb-plaga').textContent = data.combined.riesgo_plaga_final;
       document.getElementById('comb-calendario').textContent = data.combined.calendario_estimado;
 
-      ['panel-genetic', 'panel-environment', 'panel-combined'].forEach(id => {
+      window.__simulationActive = true;
+      ['panel-genetic', 'panel-environment', 'panel-combined', 'panel-env-sliders'].forEach(id => {
         document.getElementById(id).classList.add('visible');
       });
     }
@@ -1436,6 +1712,438 @@
 
     window.openGeneEditor  = openGeneEditor;
     window.closeGeneEditor = closeGeneEditor;
+
+    // ═══════════════════════════════════════════════════════
+    // ── Environmental sliders — state & agronomic equations ──
+    // ═══════════════════════════════════════════════════════
+
+    const ENV = {
+      radiacion:     16,   // MJ/m²/día  (Rg global radiation)
+      precipitacion: 15,   // mm/semana
+      temperatura:   20,   // °C media diaria
+      humedad:       60,   // % HR (humedad relativa)
+      viento:         3,   // m/s (velocidad media diaria)
+      nitrogeno:     80,   // kg N/ha disponible
+    };
+
+    // Slider display config
+    const ENV_CFG = {
+      radiacion:     { min: 2,   max: 30,  step: 0.5, fmt: v => v.toFixed(1) },
+      precipitacion: { min: 0,   max: 80,  step: 1,   fmt: v => v.toFixed(0) },
+      temperatura:   { min: 5,   max: 42,  step: 0.5, fmt: v => v.toFixed(1) },
+      humedad:       { min: 20,  max: 100, step: 1,   fmt: v => v.toFixed(0) },
+      viento:        { min: 0,   max: 15,  step: 0.5, fmt: v => v.toFixed(1) },
+      nitrogeno:     { min: 0,   max: 250, step: 5,   fmt: v => v.toFixed(0) },
+    };
+
+    // ── Canvas Particle System (lluvia · niebla · nieve · viento) ──
+    (function initParticles() {
+      const canvas = document.getElementById('particles-canvas');
+      const ctx = canvas.getContext('2d');
+      let W = 0, H = 0;
+
+      function resize() {
+        const wrap = document.getElementById('canvas-wrap');
+        if (!wrap) return;
+        const r = wrap.getBoundingClientRect();
+        W = canvas.width  = r.width;
+        H = canvas.height = r.height;
+      }
+      resize();
+      new ResizeObserver(resize).observe(document.getElementById('canvas-wrap'));
+
+      const pools = { rain: [], mist: [], snow: [], wind: [] };
+      function rnd(a, b) { return a + Math.random() * (b - a); }
+
+      function spawnRain() {
+        pools.rain.push({
+          x: rnd(0, W), y: rnd(-30, -5),
+          vy: rnd(11, 20), vx: rnd(-3.5, -1.5),
+          len: rnd(9, 18), alpha: rnd(0.4, 0.8)
+        });
+      }
+      function spawnMist() {
+        pools.mist.push({
+          x: rnd(0, W), y: rnd(0, H),
+          vx: rnd(-0.25, 0.25), vy: rnd(-0.1, 0.1),
+          r: rnd(2, 6), alpha: rnd(0.06, 0.20),
+          phase: rnd(0, Math.PI * 2), life: 0, maxLife: rnd(180, 420)
+        });
+      }
+      function spawnSnow() {
+        pools.snow.push({
+          x: rnd(-10, W), y: rnd(-15, -2),
+          vy: rnd(0.7, 2.4), vx: rnd(-0.6, 0.6),
+          r: rnd(1.8, 5.5), alpha: rnd(0.55, 0.95),
+          phase: rnd(0, Math.PI * 2), sway: rnd(0.4, 1.4)
+        });
+      }
+      function spawnWind() {
+        pools.wind.push({
+          x: rnd(-60, -10), y: rnd(H * 0.25, H * 0.92),
+          vx: rnd(7, 16), vy: rnd(-1.2, 1.2),
+          len: rnd(18, 55), alpha: rnd(0.08, 0.22)
+        });
+      }
+
+      let t = 0;
+      function loop() {
+        if (!window.__simulationActive) { ctx.clearRect(0, 0, W, H); return; }
+        ctx.clearRect(0, 0, W, H);
+        t++;
+
+        const prec = ENV.precipitacion;
+        const hum  = ENV.humedad;
+        const temp = ENV.temperatura;
+        const wind = ENV.viento;
+
+        // — Rain —
+        const rainTarget = prec > 8 ? Math.min(140, ((prec - 8) / 72) * 140 | 0) : 0;
+        if (pools.rain.length < rainTarget) spawnRain();
+        ctx.lineCap = 'round';
+        pools.rain = pools.rain.filter(p => {
+          p.x += p.vx; p.y += p.vy;
+          if (p.y > H + 25) return false;
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p.x - p.vx * (p.len / p.vy), p.y - p.len);
+          ctx.strokeStyle = `rgba(110,160,230,${p.alpha})`;
+          ctx.lineWidth = 1.3;
+          ctx.stroke();
+          return true;
+        });
+
+        // — Mist / Humidity —
+        const mistTarget = hum > 55 ? Math.min(70, ((hum - 55) / 45) * 70 | 0) : 0;
+        if (pools.mist.length < mistTarget && t % 5 === 0) spawnMist();
+        pools.mist = pools.mist.filter(p => {
+          p.life++;
+          if (p.life >= p.maxLife) return false;
+          p.x += p.vx + Math.sin(p.phase + t * 0.009) * 0.22;
+          p.y += p.vy + Math.cos(p.phase + t * 0.007) * 0.12;
+          if (p.x < -12) p.x = W + 12;
+          if (p.x > W + 12) p.x = -12;
+          if (p.y < -12) p.y = H + 12;
+          if (p.y > H + 12) p.y = -12;
+          const lr = p.life / p.maxLife;
+          const fade = lr < 0.12 ? lr / 0.12 : lr > 0.88 ? (1 - lr) / 0.12 : 1;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(195,210,225,${(p.alpha * fade).toFixed(2)})`;
+          ctx.fill();
+          return true;
+        });
+
+        // — Snow (low temperature) —
+        const snowTarget = temp < 8 ? Math.min(120, ((8 - temp) / 8) * 120 | 0) : 0;
+        if (pools.snow.length < snowTarget && t % 2 === 0) spawnSnow();
+        pools.snow = pools.snow.filter(p => {
+          const windDrift = wind > 4 ? (wind - 4) * 0.18 : 0;
+          p.x += p.vx + Math.sin(p.phase + t * 0.013) * p.sway + windDrift;
+          p.y += p.vy;
+          if (p.y > H + 12 || p.x > W + 25 || p.x < -25) return false;
+          // Snowflake circle
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(225,238,255,${p.alpha})`;
+          ctx.fill();
+          // Crystal arms for large flakes
+          if (p.r > 3.2) {
+            ctx.strokeStyle = `rgba(200,220,255,${(p.alpha * 0.55).toFixed(2)})`;
+            ctx.lineWidth = 0.7;
+            for (let a = 0; a < 3; a++) {
+              const ang = (a / 3) * Math.PI + t * 0.004;
+              ctx.beginPath();
+              ctx.moveTo(p.x - Math.cos(ang) * p.r * 1.9, p.y - Math.sin(ang) * p.r * 1.9);
+              ctx.lineTo(p.x + Math.cos(ang) * p.r * 1.9, p.y + Math.sin(ang) * p.r * 1.9);
+              ctx.stroke();
+            }
+          }
+          return true;
+        });
+
+        // — Wind streaks —
+        const windTarget = wind > 4 ? Math.min(45, ((wind - 4) / 11) * 45 | 0) : 0;
+        if (pools.wind.length < windTarget && t % 4 === 0) spawnWind();
+        pools.wind = pools.wind.filter(p => {
+          p.x += p.vx; p.y += p.vy;
+          if (p.x > W + 65) return false;
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p.x - p.len, p.y - p.vy * (p.len / p.vx));
+          ctx.strokeStyle = `rgba(200,205,195,${p.alpha})`;
+          ctx.lineWidth = 0.9;
+          ctx.stroke();
+          return true;
+        });
+
+      }
+
+      // MessageChannel trick: bypasses Chrome's background-tab throttling of RAF/setInterval
+      // Limits frame rate to ~60fps max via timestamp delta check
+      let lastT = 0;
+      const ch = new MessageChannel();
+      ch.port1.onmessage = () => {
+        const now = performance.now();
+        if (now - lastT >= 16) { lastT = now; loop(); }
+        ch.port2.postMessage(null);
+      };
+      ch.port2.postMessage(null);
+
+      window.__particleResize = resize;
+    })();
+
+    function onEnvSlider(key, rawVal) {
+      const val = parseFloat(rawVal);
+      ENV[key] = val;
+      _updateSliderDisplay(key, val);
+      _applyVisualEffects();
+      _updateAgroTable();
+    }
+
+    function _updateSliderDisplay(key, val) {
+      const cfg = ENV_CFG[key];
+      const pct = ((val - cfg.min) / (cfg.max - cfg.min)) * 100;
+      const input = document.getElementById('sl-' + key);
+      if (input) input.style.setProperty('--pct', pct + '%');
+      const valEl = document.getElementById('sl-' + key + '-val');
+      if (valEl) valEl.textContent = cfg.fmt(val);
+    }
+
+    function _sliderColor(input, cls) {
+      input.classList.remove('good', 'warn', 'stress');
+      input.classList.add(cls || 'good');
+    }
+
+    function _applyVisualEffects() {
+      const { radiacion, precipitacion, temperatura, humedad, viento } = ENV;
+
+      // 1. Canvas brightness from solar radiation (base 16 MJ/m²/día → brightness 1.0)
+      const brightness = Math.max(0.55, Math.min(1.45, 0.55 + radiacion / 30 * 0.9));
+      const cc = document.getElementById('canvas-container');
+      if (cc) cc.style.filter = `brightness(${brightness.toFixed(2)})`;
+
+      // 2. Canvas background color: wet soil darkens, dry + sun lightens/yellows (base cream #e8e4da)
+      const rainF = Math.min(1, precipitacion / 50);
+      const radF  = Math.min(1, (radiacion - 10) / 20);
+      const r = Math.round(232 - rainF * 80 + radF * 8);
+      const g = Math.round(228 - rainF * 78 + radF * 3);
+      const b = Math.round(218 - rainF * 98 - radF * 30);
+      const cw = document.getElementById('canvas-wrap');
+      if (cw) cw.style.backgroundColor = `rgb(${Math.max(80,r)},${Math.max(80,g)},${Math.max(60,b)})`;
+
+      // 3. Temperature tint
+      const tint = document.getElementById('env-tint');
+      if (tint) {
+        if (temperatura < 8) {
+          const s = Math.min(0.28, (8 - temperatura) / 15);
+          tint.style.background = `rgba(140,185,250,${s.toFixed(2)})`;
+        } else if (temperatura > 34) {
+          const s = Math.min(0.22, (temperatura - 34) / 20);
+          tint.style.background = `rgba(230,110,30,${s.toFixed(2)})`;
+        } else {
+          tint.style.background = 'transparent';
+        }
+      }
+
+      // 5. Slider indicator color
+      _colorSlider('radiacion',
+        radiacion < 6 || radiacion > 26 ? 'stress' : radiacion < 10 || radiacion > 22 ? 'warn' : 'good');
+      _colorSlider('precipitacion',
+        precipitacion > 60 ? 'stress' : precipitacion < 5 ? 'warn' : 'good');
+      _colorSlider('temperatura',
+        temperatura < 8 || temperatura > 36 ? 'stress' : temperatura < 12 || temperatura > 32 ? 'warn' : 'good');
+      _colorSlider('humedad',
+        humedad > 85 ? 'stress' : humedad < 30 || humedad > 75 ? 'warn' : 'good');
+      _colorSlider('viento',
+        viento > 10 ? 'stress' : viento > 7 ? 'warn' : 'good');
+    }
+
+    function _colorSlider(key, cls) {
+      const el = document.getElementById('sl-' + key);
+      if (el) { el.classList.remove('good','warn','stress'); el.classList.add(cls); }
+    }
+
+    // ── Agronomic equations ────────────────────────────────
+    // ETo (Penman-Monteith simplified, FAO-56 approach):
+    //   ETo ≈ 0.0135 × Rg(MJ/m²/día) × (T+17.8)^0.5 × (1 − HR/100)^0.07 × (1 + u2*0.04)
+    // Kc tomate: 0.60 (inicial), 1.15 (pleno desarrollo), 0.80 (maduración)
+    // Kc medio para demo: 0.95
+    function _calcETo() {
+      const { radiacion, temperatura, humedad, viento } = ENV;
+      const T = temperatura, Rg = radiacion, HR = humedad, u2 = viento;
+      const vpd = (1 - HR / 100) * 0.6108 * Math.exp(17.27 * T / (T + 237.3)); // kPa
+      // Simplified Hargreaves-Samani with wind correction
+      const eto = 0.0023 * Rg * Math.pow(Math.max(0, T + 17.8), 0.5) * (1 + u2 * 0.06);
+      return { eto: Math.max(0, eto), vpd: Math.max(0, vpd) }; // mm/día
+    }
+
+    function _updateAgroTable() {
+      const { radiacion, precipitacion, temperatura, humedad, viento, nitrogeno } = ENV;
+      const { eto, vpd } = _calcETo();
+      const etoDiario = eto;
+      const etoSemanal = eto * 7;
+      const Kc = 0.95; // Kc medio tomate en pleno desarrollo
+      const etc = etoSemanal * Kc; // ETc semanal mm
+      const pef = precipitacion * 0.75; // precipitación efectiva (75%)
+      const riegoNeto = Math.max(0, etc - pef); // mm/semana
+
+      // — ETo/ETc display (necesidad de riego) —
+      const riegoEl = document.getElementById('env-riego');
+      if (riegoEl) {
+        riegoEl.textContent = `${riegoNeto.toFixed(1)} mm/sem (ETc ${etc.toFixed(1)})`;
+        _valColor(riegoEl, riegoNeto < 5 ? 'val-good' : riegoNeto < 30 ? '' : riegoNeto < 50 ? 'val-warn' : 'val-bad');
+      }
+
+      // — VPD display in env section (extra info on riesgo) —
+      // — Riesgo climático —
+      let riesgoTxt, riesgoClass;
+      if (temperatura < 8)       { riesgoTxt = `Alto · helada (${temperatura.toFixed(1)}°C)`;     riesgoClass = 'val-bad'; }
+      else if (temperatura > 36) { riesgoTxt = `Alto · golpe calor (${temperatura.toFixed(1)}°C)`; riesgoClass = 'val-bad'; }
+      else if (viento > 10)      { riesgoTxt = `Medio · viento fuerte (${viento.toFixed(1)} m/s)`;  riesgoClass = 'val-warn'; }
+      else if (temperatura < 12) { riesgoTxt = `Medio · frío (${temperatura.toFixed(1)}°C)`;        riesgoClass = 'val-warn'; }
+      else if (temperatura > 32) { riesgoTxt = `Medio · calor elevado`;                              riesgoClass = 'val-warn'; }
+      else if (vpd > 2.5)        { riesgoTxt = `Medio · VPD alto (${vpd.toFixed(2)} kPa)`;          riesgoClass = 'val-warn'; }
+      else                       { riesgoTxt = `Bajo · VPD ${vpd.toFixed(2)} kPa`;                   riesgoClass = 'val-good'; }
+      const riesgoEl = document.getElementById('env-riesgo');
+      if (riesgoEl) { riesgoEl.textContent = riesgoTxt; _valColor(riesgoEl, riesgoClass); }
+
+      // — Riesgo de plaga / hongos —
+      // Botrytis: HR>80% y T 15-25°C es óptimo para hongos
+      let plagaTxt, plagaClass;
+      const hongosRisk = humedad > 80 && temperatura > 14 && temperatura < 26;
+      const midHongos  = humedad > 70 && temperatura > 12;
+      if (hongosRisk)           { plagaTxt = `Alto · Botrytis (HR ${humedad}%, ${temperatura.toFixed(0)}°C)`; plagaClass = 'val-bad'; }
+      else if (precipitacion > 55) { plagaTxt = `Medio · encharcamiento (${precipitacion} mm/sem)`;           plagaClass = 'val-warn'; }
+      else if (midHongos)       { plagaTxt = `Medio · presión fúngica`;                                        plagaClass = 'val-warn'; }
+      else                      { plagaTxt = `Bajo · condiciones estables`;                                    plagaClass = 'val-good'; }
+      const plagaEl = document.getElementById('comb-plaga');
+      if (plagaEl) { plagaEl.textContent = plagaTxt; _valColor(plagaEl, plagaClass); }
+
+      // — Calendario estimado (días a cosecha) —
+      // Base 143 días (cv estándar). Factor térmico según GDD (Growing Degree Days):
+      // GDD/día = max(0, T_media - T_base(10°C))
+      const gddDia = Math.max(0, temperatura - 10);
+      // Total GDD necesarios ≈ 1200 para tomate cultivar estándar
+      const gddTotal = 1200;
+      const diasCosecha = gddDia > 0 ? Math.round(gddTotal / gddDia) : 999;
+      const calEl = document.getElementById('comb-calendario');
+      if (calEl) {
+        if (gddDia <= 0) {
+          calEl.textContent = 'Sin desarrollo · T<10°C (T_base)';
+          _valColor(calEl, 'val-bad');
+        } else {
+          calEl.textContent = `~${diasCosecha} días (${gddDia.toFixed(1)} GDD/día)`;
+          _valColor(calEl, diasCosecha < 100 ? 'val-warn' : diasCosecha > 200 ? 'val-warn' : 'val-good');
+        }
+      }
+
+      // — Producción potencial (t/ha) —
+      // Base 65 t/ha para tomate en condiciones ideales (Murcia/Almería)
+      // Reducciones por estrés:
+      let prodBase = 65;
+      // Temperatura óptima 18-26°C para tomate
+      if (temperatura < 10 || temperatura > 38) prodBase *= 0.40;
+      else if (temperatura < 14 || temperatura > 34) prodBase *= 0.72;
+      else if (temperatura < 16 || temperatura > 30) prodBase *= 0.88;
+      // Radiation: óptimo ~18 MJ/m²/día
+      if (radiacion < 8) prodBase *= 0.70;
+      else if (radiacion < 12) prodBase *= 0.88;
+      else if (radiacion > 26) prodBase *= 0.92;
+      // VPD: óptimo 0.5-1.5 kPa
+      if (vpd > 3.5) prodBase *= 0.75;
+      else if (vpd > 2.5) prodBase *= 0.88;
+      else if (vpd < 0.2) prodBase *= 0.90;
+      // Nitrogen: óptimo 80-140 kg N/ha para tomate
+      if (nitrogeno < 20) prodBase *= 0.50;
+      else if (nitrogeno < 50) prodBase *= 0.75;
+      else if (nitrogeno < 70) prodBase *= 0.90;
+      else if (nitrogeno > 200) prodBase *= 0.85; // exceso nitrógeno → vegetativo, menos fruto
+      const prod = Math.round(prodBase * 10) / 10;
+      const prodEl = document.getElementById('gen-produccion');
+      if (prodEl) {
+        prodEl.textContent = `${prod} t/ha`;
+        _valColor(prodEl, prod >= 55 ? 'val-good' : prod >= 35 ? 'val-warn' : 'val-bad');
+      }
+    }
+
+    function _valColor(el, cls) {
+      el.classList.remove('val-good', 'val-warn', 'val-bad');
+      if (cls) el.classList.add(cls);
+    }
+
+    // ── Plant health + warning badges ──────────────────────────────────────────
+    function _calcPlantHealth() {
+      const { radiacion, precipitacion, temperatura, humedad, viento, nitrogeno } = ENV;
+      const { eto } = _calcETo();
+      let h = 1.0;
+      if      (temperatura < 5)  h *= 0.08;
+      else if (temperatura < 8)  h *= 0.25 + (temperatura - 5) / 3 * 0.35;
+      else if (temperatura < 12) h *= 0.60 + (temperatura - 8) / 4 * 0.25;
+      else if (temperatura < 16) h *= 0.85 + (temperatura - 12) / 4 * 0.15;
+      else if (temperatura > 40) h *= 0.05;
+      else if (temperatura > 36) h *= 0.15 + (40 - temperatura) / 4 * 0.55;
+      else if (temperatura > 32) h *= 0.60 + (36 - temperatura) / 4 * 0.40;
+      else if (temperatura > 28) h *= 0.80 + (32 - temperatura) / 4 * 0.20;
+      const etcW = eto * 7 * 0.95;
+      const pef  = precipitacion * 0.75;
+      if (etcW > 0) {
+        const def = Math.max(0, etcW - pef) / etcW;
+        if      (def > 0.85) h *= 0.25;
+        else if (def > 0.60) h *= 0.55;
+        else if (def > 0.35) h *= 0.80;
+      }
+      if      (nitrogeno < 15)  h *= 0.40;
+      else if (nitrogeno < 40)  h *= 0.62 + (nitrogeno - 15) / 25 * 0.23;
+      else if (nitrogeno < 70)  h *= 0.85 + (nitrogeno - 40) / 30 * 0.15;
+      else if (nitrogeno > 220) h *= 0.75;
+      if (radiacion < 4)  h *= 0.50;
+      else if (radiacion < 8)  h *= 0.75;
+      if      (viento > 12) h *= 0.60;
+      else if (viento > 10) h *= 0.80;
+      if (humedad > 88 && temperatura > 14 && temperatura < 26) h *= 0.70;
+      return Math.max(0, Math.min(1, h));
+    }
+
+    function _updatePlantWarnings() {
+      const { radiacion, precipitacion, temperatura, humedad, viento, nitrogeno } = ENV;
+      const { eto } = _calcETo();
+      const etcW   = eto * 7 * 0.95;
+      const deficit = etcW > 0 ? Math.max(0, etcW - precipitacion * 0.75) / etcW : 0;
+      const health  = _calcPlantHealth();
+      window.__plantStress = 1 - health;
+
+      const hbw = document.getElementById("health-bar-wrap");
+      const hbf = document.getElementById("health-bar-fill");
+      if (hbw && hbf) {
+        hbw.classList.toggle("show", health < 0.85);
+        hbf.style.width = (health * 100).toFixed(1) + "%";
+        hbf.style.backgroundColor =
+          health > 0.65 ? "#c4e832" : health > 0.35 ? "#f59e0b" : "#ef4444";
+      }
+      _setWarn("warn-frost",     temperatura < 8);
+      _setWarn("warn-heat",      temperatura > 35);
+      _setWarn("warn-drought",   deficit > 0.60);
+      _setWarn("warn-fungus",    humedad > 75 && temperatura > 14 && temperatura < 26);
+      _setWarn("warn-nitrogen",  nitrogeno < 40);
+      _setWarn("warn-wind",      viento > 10);
+      _setWarn("warn-radiation", radiacion > 27 || radiacion < 5);
+    }
+
+    function _setWarn(id, active) {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle("active", !!active);
+    }
+
+    // Init
+    Object.keys(ENV).forEach(k => _updateSliderDisplay(k, ENV[k]));
+    _applyVisualEffects();
+    _updateAgroTable();
+    _updatePlantWarnings();
+
+    const _baseEnvSlider = onEnvSlider;
+    function onEnvSliderFull(key, v) { _baseEnvSlider(key, v); _updatePlantWarnings(); }
+    window.onEnvSlider = onEnvSliderFull;
   </script>
 
   <script type="importmap">
