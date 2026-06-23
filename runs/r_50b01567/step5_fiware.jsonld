@@ -1,0 +1,226 @@
+[
+  {
+    "@context": "https://smart-data-models.github.io/dataModel.Agrifood/context.jsonld",
+    "id": "urn:ngsi-ld:AgriParcel:r_50b01567",
+    "type": "AgriParcel",
+    "location": {
+      "type": "GeoProperty",
+      "value": {
+        "type": "Point",
+        "coordinates": [
+          -3.7038,
+          40.4168
+        ]
+      }
+    },
+    "area": {
+      "type": "Property",
+      "value": 100,
+      "unitCode": "MTK"
+    },
+    "hasAgriCrop": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:AgriCrop:r_50b01567"
+    },
+    "name": {
+      "type": "Property",
+      "value": "Madrid"
+    }
+  },
+  {
+    "@context": "https://smart-data-models.github.io/dataModel.Agrifood/context.jsonld",
+    "id": "urn:ngsi-ld:AgriCrop:r_50b01567",
+    "type": "AgriCrop",
+    "name": {
+      "type": "Property",
+      "value": "Tipo beef/Heinz (fruto grande)"
+    },
+    "alternateName": {
+      "type": "Property",
+      "value": "Solanum lycopersicum"
+    },
+    "plantingFrom": {
+      "type": "Property",
+      "value": [
+        {
+          "@type": "DateTime",
+          "@value": "2026-03-15"
+        }
+      ]
+    },
+    "wateringFrequency": {
+      "type": "Property",
+      "value": "weekly"
+    },
+    "agroVocConcept": {
+      "type": "Property",
+      "value": "http://aims.fao.org/aos/agrovoc/c_7715"
+    },
+    "genomeVariants": {
+      "type": "Property",
+      "value": [
+        {
+          "qtl": "fw2.2",
+          "trait": "peso_fruto",
+          "effect": "+30%"
+        }
+      ]
+    }
+  },
+  {
+    "@context": [
+      "https://smart-data-models.github.io/dataModel.Agrifood/context.jsonld",
+      {
+        "DigitalTwinSimulation": "https://lavegainnova.es/schemas/DigitalTwinSimulation"
+      }
+    ],
+    "id": "urn:ngsi-ld:DigitalTwinSimulation:r_50b01567:w0",
+    "type": "DigitalTwinSimulation",
+    "refAgriCrop": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:AgriCrop:r_50b01567"
+    },
+    "weekNumber": {
+      "type": "Property",
+      "value": 0
+    },
+    "bbchStage": {
+      "type": "Property",
+      "value": "05-09"
+    },
+    "estimatedHeight": {
+      "type": "Property",
+      "value": 0,
+      "unitCode": "CMT"
+    },
+    "biologicalSummary": {
+      "type": "Property",
+      "value": "La semilla absorbe agua e inicia la germinación. La radícula emerge hacia el suelo."
+    },
+    "modelAsset": {
+      "type": "Property",
+      "value": "/api/runs/r_50b01567/glb/0"
+    },
+    "imageAsset": {
+      "type": "Property",
+      "value": "/api/runs/r_50b01567/image/0"
+    }
+  },
+  {
+    "@context": [
+      "https://smart-data-models.github.io/dataModel.Agrifood/context.jsonld",
+      {
+        "DigitalTwinSimulation": "https://lavegainnova.es/schemas/DigitalTwinSimulation"
+      }
+    ],
+    "id": "urn:ngsi-ld:DigitalTwinSimulation:r_50b01567:w1",
+    "type": "DigitalTwinSimulation",
+    "refAgriCrop": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:AgriCrop:r_50b01567"
+    },
+    "weekNumber": {
+      "type": "Property",
+      "value": 1
+    },
+    "bbchStage": {
+      "type": "Property",
+      "value": "10-11"
+    },
+    "estimatedHeight": {
+      "type": "Property",
+      "value": 5,
+      "unitCode": "CMT"
+    },
+    "biologicalSummary": {
+      "type": "Property",
+      "value": "Los cotiledones se despliegan y capturan luz solar. Inicio de fotosíntesis activa."
+    },
+    "modelAsset": {
+      "type": "Property",
+      "value": "/api/runs/r_50b01567/glb/1"
+    },
+    "imageAsset": {
+      "type": "Property",
+      "value": "/api/runs/r_50b01567/image/1"
+    }
+  },
+  {
+    "@context": [
+      "https://smart-data-models.github.io/dataModel.Agrifood/context.jsonld",
+      {
+        "DigitalTwinSimulation": "https://lavegainnova.es/schemas/DigitalTwinSimulation"
+      }
+    ],
+    "id": "urn:ngsi-ld:DigitalTwinSimulation:r_50b01567:w2",
+    "type": "DigitalTwinSimulation",
+    "refAgriCrop": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:AgriCrop:r_50b01567"
+    },
+    "weekNumber": {
+      "type": "Property",
+      "value": 2
+    },
+    "bbchStage": {
+      "type": "Property",
+      "value": "12-14"
+    },
+    "estimatedHeight": {
+      "type": "Property",
+      "value": 12,
+      "unitCode": "CMT"
+    },
+    "biologicalSummary": {
+      "type": "Property",
+      "value": "Emergen las primeras hojas verdaderas pinnadas. La fotosíntesis se vuelve plenamente activa."
+    },
+    "modelAsset": {
+      "type": "Property",
+      "value": "/api/runs/r_50b01567/glb/2"
+    },
+    "imageAsset": {
+      "type": "Property",
+      "value": "/api/runs/r_50b01567/image/2"
+    }
+  },
+  {
+    "@context": [
+      "https://smart-data-models.github.io/dataModel.Agrifood/context.jsonld",
+      {
+        "DigitalTwinSimulation": "https://lavegainnova.es/schemas/DigitalTwinSimulation"
+      }
+    ],
+    "id": "urn:ngsi-ld:DigitalTwinSimulation:r_50b01567:w3",
+    "type": "DigitalTwinSimulation",
+    "refAgriCrop": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:AgriCrop:r_50b01567"
+    },
+    "weekNumber": {
+      "type": "Property",
+      "value": 3
+    },
+    "bbchStage": {
+      "type": "Property",
+      "value": "15-19"
+    },
+    "estimatedHeight": {
+      "type": "Property",
+      "value": 25,
+      "unitCode": "CMT"
+    },
+    "biologicalSummary": {
+      "type": "Property",
+      "value": "Crecimiento vegetativo intenso con 5-7 hojas. Genotipo Tipo beef/Heinz (fruto grande) manifiesta vigor característico."
+    },
+    "modelAsset": {
+      "type": "Property",
+      "value": "/api/runs/r_50b01567/glb/3"
+    },
+    "imageAsset": {
+      "type": "Property",
+      "value": "/api/runs/r_50b01567/image/3"
+    }
+  }
+]

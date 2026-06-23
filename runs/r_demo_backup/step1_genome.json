@@ -1,0 +1,12 @@
+{
+  "totalVariants": 30,
+  "keyVariants": [
+    { "chrom": "SL5.0ch02", "position": 24500500, "ref": "A", "alt": "G", "qtl_match": "fw2.2", "trait": "peso_fruto", "effect": "+30%" },
+    { "chrom": "SL5.0ch03", "position": 65500100, "ref": "C", "alt": "G", "qtl_match": "fw3.2", "trait": "peso_fruto", "effect": "+15%" },
+    { "chrom": "SL5.0ch06", "position": 36800100, "ref": "C", "alt": "T", "qtl_match": "lcy-b", "trait": "licopeno", "effect": "alto" },
+    { "chrom": "SL5.0ch06", "position": 3700500, "ref": "T", "alt": "A", "qtl_match": "Mi-1.2", "trait": "resistencia_nematodos", "effect": "fuerte" },
+    { "chrom": "SL5.0ch09", "position": 4200500, "ref": "A", "alt": "G", "qtl_match": "Tm-2a", "trait": "resistencia_ToMV", "effect": "fuerte" }
+  ],
+  "inferredCultivar": "Tipo beef/Heinz (fruto grande)",
+  "species": "Solanum lycopersicum"
+}

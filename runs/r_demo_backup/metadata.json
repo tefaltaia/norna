@@ -1,0 +1,7 @@
+{
+  "runId": "r_demo_backup",
+  "location": { "lat": 40.4168, "lon": -3.7038, "label": "Madrid" },
+  "sowingDate": "2026-03-15",
+  "weeks": 4,
+  "startedAt": "2026-06-23T00:00:00.000Z"
+}

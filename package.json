@@ -1,0 +1,22 @@
+{
+  "name": "gemelo-tomate",
+  "version": "1.0.0",
+  "description": "Gemelo Digital de Tomate - Hackathon La Vega Innova",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.0",
+    "@anthropic-ai/sdk": "^0.30.0",
+    "@fal-ai/client": "^1.2.0",
+    "chromadb": "^1.9.0",
+    "dotenv": "^16.4.0",
+    "uuid": "^10.0.0",
+    "cors": "^2.8.5",
+    "node-fetch": "^3.3.0",
+    "multer": "^1.4.5-lts.1"
+  }
+}

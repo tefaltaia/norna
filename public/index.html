@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NORNA · Histórico 3D del Trigo</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root {
+      --nk: #16160e;
+      --forest: #20281c;
+      --lime: #c8e63e;
+      --lime-dim: rgba(200,230,62,0.12);
+      --lime-border: rgba(200,230,62,0.3);
+      --text: #d4e8b0;
+      --muted: #6a8050;
+      --panel-bg: rgba(22,22,14,0.92);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--nk);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: var(--text);
+      overflow: hidden;
+      display: flex;
+      height: 100vh;
+    }
+
+    /* ── 3D canvas area ── */
+    #canvas-wrap {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #canvas-container {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* ── Bottom timeline ── */
+    #timeline-bar {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: linear-gradient(to top, rgba(22,22,14,0.97) 55%, transparent);
+      padding: 14px 24px 20px;
+    }
+
+    #stage-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--lime);
+      text-align: center;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+
+    #stage-meta {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    #stage-days { color: var(--lime); font-weight: 600; }
+
+    #timeline {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+    }
+
+    .stage-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      min-width: 76px;
+      transition: all 0.2s;
+    }
+    .stage-btn:hover { background: var(--lime-dim); color: var(--text); }
+    .stage-btn.active { background: var(--lime-dim); color: var(--lime); border: 1px solid var(--lime-border); }
+
+    .s-icon { font-size: 1.2rem; margin-bottom: 2px; }
+    .s-label { font-size: 0.55rem; font-weight: 600; text-align: center; line-height: 1.2; }
+    .s-days { font-size: 0.52rem; color: var(--muted); margin-top: 2px; }
+    .stage-btn.active .s-days { color: var(--lime); opacity: 0.7; }
+
+    .connector { width: 16px; height: 1px; background: #2a3020; flex-shrink: 0; transition: background 0.4s; }
+    .connector.passed { background: var(--lime); opacity: 0.5; }
+
+    /* ── Nav controls (bottom-left of canvas) ── */
+    #nav-controls {
+      position: absolute;
+      bottom: 168px;
+      left: 16px;
+      display: flex;
+      gap: 6px;
+    }
+
+    .nav-btn {
+      background: var(--panel-bg);
+      border: 1px solid #2a3820;
+      color: var(--muted);
+      width: 34px; height: 34px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover, .nav-btn.on { border-color: var(--lime); color: var(--lime); background: var(--lime-dim); }
+
+    /* ── Right panel ── */
+    #right-panel {
+      width: 300px;
+      background: var(--forest);
+      border-left: 1px solid #2a3820;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      overflow: hidden;
+    }
+
+    .panel-section {
+      border-bottom: 1px solid #2a3820;
+      padding: 16px;
+    }
+
+    .section-label {
+      font-size: 0.6rem;
+      letter-spacing: 2px;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+
+    /* Map */
+    #map {
+      height: 160px;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid #2a3820;
+      margin-bottom: 8px;
+    }
+
+    #coord-display {
+      font-size: 0.68rem;
+      color: var(--lime);
+      font-family: monospace;
+      background: rgba(200,230,62,0.06);
+      border: 1px solid var(--lime-border);
+      border-radius: 4px;
+      padding: 5px 8px;
+      margin-bottom: 6px;
+    }
+
+    #location-name {
+      font-size: 0.65rem;
+      color: var(--muted);
+    }
+
+    /* DNA Upload */
+    #dna-drop {
+      border: 1px dashed #3a5028;
+      border-radius: 6px;
+      padding: 14px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+    #dna-drop:hover { border-color: var(--lime); background: var(--lime-dim); }
+
+    .dna-icon { font-size: 1.4rem; margin-bottom: 4px; }
+    .dna-title { font-size: 0.72rem; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+    .dna-hint { font-size: 0.6rem; color: var(--muted); }
+
+    #dna-badge {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: rgba(200,230,62,0.08);
+      border: 1px solid var(--lime-border);
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-size: 0.65rem;
+      color: var(--lime);
+    }
+    #dna-badge.show { display: flex; }
+    .dna-file-icon { font-size: 1rem; }
+
+    /* Simulate button */
+    #sim-btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--lime);
+      color: var(--nk);
+      border: none;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    #sim-btn:hover { background: #d8f050; }
+    #sim-btn:disabled { background: #3a4828; color: #5a6840; cursor: not-allowed; }
+
+    /* Loading overlay on button */
+    #sim-btn .btn-loading {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: var(--lime);
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    #sim-btn.loading .btn-loading { display: flex; }
+    #sim-btn.loading .btn-text { opacity: 0; }
+
+    .spin {
+      width: 14px; height: 14px;
+      border: 2px solid var(--nk);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Model info */
+    #model-info {
+      flex: 1;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.65rem;
+      padding: 5px 0;
+      border-bottom: 1px solid #1e261a;
+    }
+    .info-key { color: var(--muted); }
+    .info-val { color: var(--text); font-weight: 600; font-family: monospace; }
+    .info-val.lime { color: var(--lime); }
+
+    #status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--lime);
+      box-shadow: 0 0 6px var(--lime);
+      animation: pulse 2s ease-in-out infinite;
+      display: inline-block;
+      margin-right: 5px;
+    }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+
+    /* Progress bar top */
+    #top-bar {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: #1e261a;
+      z-index: 10;
+    }
+    #top-bar-fill {
+      height: 100%;
+      background: var(--lime);
+      transition: width 0.5s ease;
+      width: 0%;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Left: 3D canvas ── -->
+  <div id="canvas-wrap">
+    <div id="top-bar"><div id="top-bar-fill"></div></div>
+    <div id="canvas-container"></div>
+
+    <div id="nav-controls">
+      <button class="nav-btn on" id="btn-auto" onclick="toggleAuto()" title="Auto">⏵</button>
+      <button class="nav-btn" onclick="prevStage()" title="Anterior">◀</button>
+      <button class="nav-btn" onclick="nextStage()" title="Siguiente">▶</button>
+    </div>
+
+    <div id="timeline-bar">
+      <div id="stage-title">Germinación y Emergencia</div>
+      <div id="stage-meta">
+        <span id="stage-days">15–20 días</span>
+        <span>·</span>
+        <span id="stage-type-label">Trigo Primavera</span>
+      </div>
+      <div id="timeline"></div>
+    </div>
+  </div>
+
+  <!-- ── Right panel ── -->
+  <div id="right-panel">
+
+    <!-- Map -->
+    <div class="panel-section">
+      <div class="section-label">Localización del Campo</div>
+      <div id="map"></div>
+      <div id="coord-display">39.8628°N · 4.0273°W</div>
+      <div id="location-name">Toledo, España — Suelo Arcillo-Limoso</div>
+    </div>
+
+    <!-- DNA -->
+    <div class="panel-section">
+      <div class="section-label">Genoma de la Variedad</div>
+      <div id="dna-drop" onclick="fakeDnaUpload()">
+        <div class="dna-icon">🧬</div>
+        <div class="dna-title">Cargar ADN de Cepa</div>
+        <div class="dna-hint">.fasta · .vcf · .txt</div>
+      </div>
+      <div id="dna-badge">
+        <span class="dna-file-icon">🧬</span>
+        <div>
+          <div style="font-weight:700;font-size:0.7rem">trigo_cepa_toledo.vcf</div>
+          <div style="font-size:0.6rem;color:var(--muted)">847 variantes · cargado</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Simulate -->
+    <div class="panel-section">
+      <div class="section-label">Simulación Fenológica</div>
+      <button id="sim-btn" onclick="runSimulation()">
+        <span class="btn-text">▶ INICIAR SIMULACIÓN</span>
+        <span class="btn-loading">
+          <span class="spin"></span>
+          <span style="font-size:0.75rem;font-weight:700;color:var(--nk)">Cargando modelo...</span>
+        </span>
+      </button>
+    </div>
+
+    <!-- Model info -->
+    <div id="model-info">
+      <div class="section-label">Estado del Modelo</div>
+      <div class="info-row">
+        <span class="info-key">Estado</span>
+        <span class="info-val lime"><span id="status-dot"></span><span id="model-status">En espera</span></span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">Etapa actual</span>
+        <span class="info-val" id="info-stage">—</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">Días acumulados</span>
+        <span class="info-val" id="info-days">—</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">Variedad</span>
+        <span class="info-val" id="info-variety">T. aestivum</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">Tipo</span>
+        <span class="info-val" id="info-type">Primavera</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">Zona climática</span>
+        <span class="info-val" id="info-climate">Csb — Med. seco</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">Lat / Lon</span>
+        <span class="info-val" id="info-coords">39.86°N / 4.03°W</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">Suelo</span>
+        <span class="info-val" id="info-soil">Arcillo-limoso</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // ── Leaflet map ──
+    const map = L.map('map', { zoomControl: false, attributionControl: false })
+      .setView([39.8628, -4.0273], 7);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 18
+    }).addTo(map);
+
+    const markerIcon = L.divIcon({
+      html: '<div style="width:12px;height:12px;background:#c8e63e;border-radius:50%;border:2px solid #16160e;box-shadow:0 0 8px #c8e63e"></div>',
+      iconSize: [12, 12], iconAnchor: [6, 6], className: ''
+    });
+
+    let marker = L.marker([39.8628, -4.0273], { icon: markerIcon }).addTo(map);
+
+    const LOCATIONS = [
+      { lat: 39.8628, lon: -4.0273, name: 'Toledo, España', soil: 'Arcillo-limoso', climate: 'Csb — Med. seco', coords: '39.86°N / 4.03°W' },
+      { lat: 41.6523, lon: -4.7245, name: 'Valladolid, España', soil: 'Franco-arcilloso', climate: 'Bsk — Estepario', coords: '41.65°N / 4.72°W' },
+      { lat: 51.1657, lon: 10.4515, name: 'Sajonia, Alemania', soil: 'Limo-arcilloso', climate: 'Cfb — Oceánico', coords: '51.17°N / 10.45°E' },
+      { lat: 48.8566, lon: 2.3522, name: 'Île-de-France', soil: 'Limoso profundo', climate: 'Cfb — Oceánico', coords: '48.86°N / 2.35°E' },
+    ];
+    let locIdx = 0;
+
+    map.on('click', (e) => {
+      locIdx = (locIdx + 1) % LOCATIONS.length;
+      const loc = LOCATIONS[locIdx];
+      marker.setLatLng([loc.lat, loc.lon]);
+      map.flyTo([loc.lat, loc.lon], 7, { duration: 1 });
+      document.getElementById('coord-display').textContent = `${loc.coords.split(' / ')[0]} · ${loc.coords.split(' / ')[1]}`;
+      document.getElementById('location-name').textContent = `${loc.name} — ${loc.soil}`;
+      document.getElementById('info-soil').textContent = loc.soil;
+      document.getElementById('info-climate').textContent = loc.climate;
+      document.getElementById('info-coords').textContent = loc.coords;
+      if (window.__wheatSetLocation) window.__wheatSetLocation(loc);
+    });
+
+    // ── Fake DNA upload ──
+    let dnaLoaded = false;
+    function fakeDnaUpload() {
+      if (dnaLoaded) return;
+      const drop = document.getElementById('dna-drop');
+      drop.style.opacity = '0.5';
+      drop.style.pointerEvents = 'none';
+      setTimeout(() => {
+        drop.style.display = 'none';
+        document.getElementById('dna-badge').classList.add('show');
+        dnaLoaded = true;
+      }, 800);
+    }
+
+    // ── Simulation ──
+    let simDone = false;
+    function runSimulation() {
+      const btn = document.getElementById('sim-btn');
+      if (simDone) return;
+      btn.classList.add('loading');
+      btn.disabled = true;
+      document.getElementById('model-status').textContent = 'Cargando...';
+
+      setTimeout(() => {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+        btn.innerHTML = '<span class="btn-text">✓ MODELO CARGADO</span>';
+        btn.style.background = '#2a3820';
+        btn.style.color = 'var(--lime)';
+        btn.style.border = '1px solid var(--lime-border)';
+        btn.style.cursor = 'default';
+        document.getElementById('model-status').textContent = 'Activo';
+        simDone = true;
+        if (window.__wheatStartAuto) window.__wheatStartAuto();
+      }, 2200);
+    }
+
+    window.fakeDnaUpload = fakeDnaUpload;
+    window.runSimulation = runSimulation;
+  </script>
+
+  <script type="importmap">
+    { "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+    }}
+  </script>
+  <script type="module" src="wheat3d.js"></script>
+</body>
+</html>

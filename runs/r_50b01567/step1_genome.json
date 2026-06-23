@@ -1,0 +1,16 @@
+{
+  "totalVariants": 1,
+  "keyVariants": [
+    {
+      "chrom": "SL5.0ch02",
+      "position": 24500000,
+      "ref": "A",
+      "alt": "G",
+      "qtl_match": "fw2.2",
+      "trait": "peso_fruto",
+      "effect": "+30%"
+    }
+  ],
+  "inferredCultivar": "Tipo beef/Heinz (fruto grande)",
+  "species": "Solanum lycopersicum"
+}

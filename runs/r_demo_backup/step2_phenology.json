@@ -1,0 +1,41 @@
+{
+  "cultivar_descripcion": "Tomate Beef tipo Heinz — fruto grande, alto licopeno, resistente a nematodos y ToMV",
+  "weeks": [
+    {
+      "week": 0,
+      "bbch_stage": "05-09",
+      "title": "Germinación",
+      "visual_prompt": "dark moist potting soil in small terracotta pot, tiny brown tomato seed with white radicle emerging, no plant structure above soil, macro photography, neutral white studio background, soft diffuse lighting, botanical scientific illustration style",
+      "biological_summary": "La semilla absorbe agua e inicia la germinación. La radícula emerge hacia el suelo buscando anclaje y agua.",
+      "estimated_height_cm": 0,
+      "scale_factor": 0.05
+    },
+    {
+      "week": 1,
+      "bbch_stage": "10-11",
+      "title": "Plántula con cotiledones",
+      "visual_prompt": "tiny tomato seedling 5cm tall with two small pale yellow-green oval cotyledons on thin translucent pale green stem, emerging from dark moist soil in small terracotta pot, white studio background, soft top lighting, botanical scientific illustration style, single plant centered",
+      "biological_summary": "Los cotiledones se despliegan y capturan luz. El hipocótilo elonga rápidamente. Inicio de fotosíntesis.",
+      "estimated_height_cm": 5,
+      "scale_factor": 0.15
+    },
+    {
+      "week": 2,
+      "bbch_stage": "12-14",
+      "title": "Primeras hojas verdaderas",
+      "visual_prompt": "young tomato plant 12cm tall with bright green main stem, three pinnate true leaves with serrated leaflets and fine glandular hairs, two smaller yellow cotyledons at base, planted in terracotta pot with dark moist soil, white neutral studio background, soft diffuse lighting, botanical scientific illustration style",
+      "biological_summary": "Emergen las primeras hojas verdaderas pinnadas. La fotosíntesis se vuelve plenamente activa y el crecimiento se acelera.",
+      "estimated_height_cm": 12,
+      "scale_factor": 0.40
+    },
+    {
+      "week": 3,
+      "bbch_stage": "15-19",
+      "title": "Crecimiento vegetativo activo",
+      "visual_prompt": "young tomato plant 25cm tall with robust dark green hairy main stem, six well-developed dark green pinnate leaves with serrated edges, small axillary bud visible, bushy healthy vigorous appearance, terracotta pot with moist dark soil, white neutral studio background, professional botanical photography style, single plant centered",
+      "biological_summary": "Crecimiento vegetativo intenso con 5-7 hojas verdaderas. El genotipo beef/Heinz (fw2.2) se manifiesta en el vigor robusto del tallo.",
+      "estimated_height_cm": 25,
+      "scale_factor": 0.80
+    }
+  ]
+}
