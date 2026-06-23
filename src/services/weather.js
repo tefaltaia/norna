@@ -25,3 +25,31 @@ export async function fetchWeatherForLocation(location, sowingDate, weeks) {
   }
   return out;
 }
+
+// Bloque "terreno/clima puro": depende exclusivamente de ubicación y fecha, no del genoma.
+export function assessEnvironmentalRisk(env, location) {
+  const weeks = env.map(w => {
+    // ET simplificada (Hargreaves-like): a mayor temperatura, mayor evapotranspiración semanal
+    const water_need_mm_week = Math.round((2.5 + w.temp_avg * 0.35) * 10) / 10;
+
+    let risk = 'bajo';
+    const reasons = [];
+    if (w.temp_avg <= 8) { risk = 'alto'; reasons.push('riesgo de helada'); }
+    else if (w.temp_avg >= 28) { risk = 'alto'; reasons.push('riesgo de golpe de calor'); }
+    else if (w.temp_avg <= 12 || w.temp_avg >= 25) { risk = 'medio'; reasons.push('temperatura subóptima'); }
+    if (w.humidity >= 75) reasons.push('alta humedad (riesgo de hongos)');
+
+    return {
+      week: w.week,
+      date: w.date,
+      water_need_mm_week,
+      climate_risk: risk,
+      climate_risk_reasons: reasons
+    };
+  });
+
+  return {
+    location_label: location.label,
+    weeks
+  };
+}

@@ -7,17 +7,44 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     :root {
-      --nk: #16160e;
-      --forest: #20281c;
-      --lime: #c8e63e;
-      --lime-dim: rgba(200,230,62,0.12);
-      --lime-border: rgba(200,230,62,0.3);
-      --text: #d4e8b0;
-      --muted: #6a8050;
-      --panel-bg: rgba(22,22,14,0.92);
+      --nk: #fafaf8;
+      --forest: #ffffff;
+      --lime: #c4e832;
+      --lime-dim: rgba(196,232,50,0.16);
+      --lime-border: rgba(196,232,50,0.45);
+      --text: #1a1a16;
+      --muted: #97968c;
+      --panel-bg: rgba(255,255,255,0.95);
+      --on-lime: #1a1a16;
+      --line: #ececea;
+      --canvas-bg: #e4e6e1;
+      --canvas-line: rgba(20,24,18,0.25);
+      --canvas-muted: rgba(20,24,18,0.88);
+      --canvas-text: #1a1a16;
+      --legibility-shadow: 0 0 5px rgba(255,255,255,0.95), 0 0 9px rgba(255,255,255,0.85), 0 1px 2px rgba(255,255,255,0.95);
+
+      /* Type scale — tweak --fs-scale to resize all text proportionally */
+      --fs-scale: 1;
+      --fs-2xs: calc(0.6rem * var(--fs-scale));
+      --fs-xs: calc(0.68rem * var(--fs-scale));
+      --fs-sm: calc(0.75rem * var(--fs-scale));
+      --fs-base: calc(0.82rem * var(--fs-scale));
+      --fs-md: calc(0.95rem * var(--fs-scale));
+      --fs-lg: calc(1.1rem * var(--fs-scale));
+      --fs-xl: calc(1.3rem * var(--fs-scale));
+      --fs-icon-sm: calc(1.1rem * var(--fs-scale));
+      --fs-icon-lg: calc(1.4rem * var(--fs-scale));
     }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { font-size: 117%; }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; transition: opacity 0.35s ease, background-color 0.35s ease, color 0.35s ease, border-color 0.35s ease; }
+
+    body.loaded #canvas-wrap, body.loaded #right-panel { opacity: 1; }
+    #canvas-wrap, #right-panel { opacity: 0; transition: opacity 0.6s ease; }
+
+    .panel-section, .info-row, .stage-btn, .nav-btn { opacity: 0; animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { to { opacity: 1; } }
 
     body {
       background: var(--nk);
@@ -33,6 +60,7 @@
       flex: 1;
       position: relative;
       overflow: hidden;
+      background: var(--canvas-bg);
     }
 
     #canvas-container {
@@ -40,21 +68,51 @@
       inset: 0;
     }
 
+    /* Hidden until the simulation has actually been started (no sensor/data yet) */
+    body.pre-sim #canvas-container,
+    body.pre-sim #timeline-bar {
+      display: none;
+    }
+    #sim-placeholder {
+      display: none;
+      position: absolute;
+      inset: 0;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      text-align: center;
+      color: var(--canvas-muted);
+    }
+    body.pre-sim #sim-placeholder {
+      display: flex;
+    }
+    #sim-placeholder-icon {
+      font-size: 2.6rem;
+      opacity: 0.6;
+    }
+    #sim-placeholder-text {
+      font-size: var(--fs-md);
+      max-width: 320px;
+      line-height: 1.5;
+    }
+
     /* ── Bottom timeline ── */
     #timeline-bar {
       position: absolute;
       bottom: 0; left: 0; right: 0;
-      background: linear-gradient(to top, rgba(22,22,14,0.97) 55%, transparent);
+      background: linear-gradient(to top, rgba(228,230,225,0.97) 62%, transparent);
       padding: 14px 24px 20px;
     }
 
     #stage-title {
-      font-size: 1.2rem;
+      font-size: var(--fs-xl);
       font-weight: 700;
-      color: var(--lime);
+      color: #3a4f0e;
       text-align: center;
       letter-spacing: 0.5px;
       margin-bottom: 2px;
+      text-shadow: var(--legibility-shadow);
     }
 
     #stage-meta {
@@ -63,11 +121,17 @@
       align-items: center;
       gap: 12px;
       margin-bottom: 10px;
-      font-size: 0.72rem;
-      color: var(--muted);
+      font-size: var(--fs-sm);
+      color: var(--canvas-muted);
+      text-shadow: var(--legibility-shadow);
     }
 
-    #stage-days { color: var(--lime); font-weight: 600; }
+    #stage-days { color: #3a4f0e; font-weight: 600; text-shadow: var(--legibility-shadow); }
+
+    #timeline-content {
+      width: fit-content;
+      margin: 0 auto;
+    }
 
     #timeline {
       display: flex;
@@ -85,61 +149,117 @@
       border-radius: 6px;
       border: none;
       background: transparent;
-      color: var(--muted);
+      color: var(--canvas-muted);
       min-width: 76px;
       transition: all 0.2s;
+      text-shadow: var(--legibility-shadow);
     }
-    .stage-btn:hover { background: var(--lime-dim); color: var(--text); }
-    .stage-btn.active { background: var(--lime-dim); color: var(--lime); border: 1px solid var(--lime-border); }
+    .stage-btn:hover { background: var(--lime-dim); color: var(--canvas-text); }
+    .stage-btn.active { background: var(--lime-dim); color: #3a4f0e; border: 1px solid var(--lime-border); }
 
-    .s-icon { font-size: 1.2rem; margin-bottom: 2px; }
-    .s-label { font-size: 0.55rem; font-weight: 600; text-align: center; line-height: 1.2; }
-    .s-days { font-size: 0.52rem; color: var(--muted); margin-top: 2px; }
-    .stage-btn.active .s-days { color: var(--lime); opacity: 0.7; }
+    .s-icon { font-size: var(--fs-icon-sm); margin-bottom: 2px; }
+    .s-label { font-size: var(--fs-2xs); font-weight: 600; text-align: center; line-height: 1.2; }
+    .s-days { font-size: var(--fs-2xs); color: var(--canvas-muted); margin-top: 2px; }
+    .stage-btn.active .s-days { color: #3a4f0e; opacity: 1; }
 
-    .connector { width: 16px; height: 1px; background: #2a3020; flex-shrink: 0; transition: background 0.4s; }
-    .connector.passed { background: var(--lime); opacity: 0.5; }
-
-    /* ── Nav controls (bottom-left of canvas) ── */
-    #nav-controls {
-      position: absolute;
-      bottom: 168px;
-      left: 16px;
-      display: flex;
-      gap: 6px;
-    }
+    .connector { width: 16px; height: 1px; background: var(--canvas-line); flex-shrink: 0; transition: background 0.4s; }
+    .connector.passed { background: var(--lime); opacity: 0.9; }
 
     .nav-btn {
-      background: var(--panel-bg);
-      border: 1px solid #2a3820;
-      color: var(--muted);
+      background: rgba(255,255,255,0.65);
+      border: 1px solid var(--canvas-line);
+      color: var(--canvas-muted);
       width: 34px; height: 34px;
+      flex-shrink: 0;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 0.8rem;
+      font-size: var(--fs-base);
       display: flex; align-items: center; justify-content: center;
       transition: all 0.2s;
     }
-    .nav-btn:hover, .nav-btn.on { border-color: var(--lime); color: var(--lime); background: var(--lime-dim); }
+    .nav-btn:hover, .nav-btn.on { border-color: var(--lime); color: #4a6312; background: var(--lime-dim); }
+
+    /* ── Stage slider (replaces nav controls) ── */
+    #stage-slider-row {
+      position: relative;
+      margin-top: 10px;
+    }
+    #btn-auto {
+      position: absolute;
+      left: -44px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    #stage-slider {
+      display: block;
+      width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 4px;
+      border-radius: 2px;
+      background: linear-gradient(to right, var(--lime) 0%, var(--lime) calc(var(--fill, 0%)), var(--canvas-line) calc(var(--fill, 0%)), var(--canvas-line) 100%);
+      outline: none;
+      cursor: pointer;
+    }
+    #stage-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--lime);
+      border: 2px solid #ffffff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+      cursor: pointer;
+    }
+    #stage-slider::-moz-range-thumb {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--lime);
+      border: 2px solid #ffffff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+      cursor: pointer;
+    }
+    #stage-slider::-moz-range-track {
+      height: 4px;
+      border-radius: 2px;
+      background: var(--canvas-line);
+    }
+    #stage-slider::-moz-range-progress {
+      height: 4px;
+      border-radius: 2px;
+      background: var(--lime);
+    }
 
     /* ── Right panel ── */
     #right-panel {
-      width: 300px;
+      width: 360px;
       background: var(--forest);
-      border-left: 1px solid #2a3820;
+      border-right: 1px solid var(--line);
       display: flex;
       flex-direction: column;
       gap: 0;
       overflow: hidden;
     }
 
+    #logo-wrap {
+      padding: 16px 16px 0 16px;
+      display: flex;
+      align-items: center;
+    }
+
+    #logo-img {
+      height: 40px;
+      width: auto;
+      object-fit: contain;
+    }
+
     .panel-section {
-      border-bottom: 1px solid #2a3820;
+      border-bottom: 1px solid var(--line);
       padding: 16px;
     }
 
     .section-label {
-      font-size: 0.6rem;
+      font-size: var(--fs-2xs);
       letter-spacing: 2px;
       color: var(--muted);
       font-weight: 700;
@@ -148,17 +268,108 @@
     }
 
     /* Map */
-    #map {
+    #map-preview-wrap {
+      position: relative;
       height: 160px;
       border-radius: 6px;
       overflow: hidden;
-      border: 1px solid #2a3820;
+      border: 1px solid var(--line);
       margin-bottom: 8px;
+      cursor: pointer;
+    }
+    #map {
+      height: 160px;
+      pointer-events: none;
+    }
+    #map-mask {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(ellipse 55% 55% at 50% 50%, transparent 35%, rgba(250,250,248,0.55) 60%, rgba(250,250,248,0.92) 85%);
+      z-index: 5;
+    }
+    #map-preview-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0);
+      color: var(--text);
+      font-size: var(--fs-sm);
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      opacity: 0;
+      transition: all 0.2s;
+      background: rgba(255,255,255,0.55);
+    }
+    #map-preview-wrap:hover #map-preview-overlay { opacity: 1; }
+
+    /* Map dialog */
+    #map-dialog-backdrop {
+      display: flex;
+      position: fixed;
+      inset: 0;
+      background: rgba(10,20,16,0.55);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s;
+    }
+    #map-dialog-backdrop.show { opacity: 1; visibility: visible; }
+    #map-dialog { transform: scale(0.96); transition: transform 0.3s ease; }
+    #map-dialog-backdrop.show #map-dialog { transform: scale(1); }
+    #map-dialog {
+      width: min(720px, 90vw);
+      height: min(560px, 80vh);
+      background: var(--forest);
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    }
+    #map-dialog-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      font-size: var(--fs-sm);
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--text);
+    }
+    #map-dialog-header button {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: var(--fs-md);
+      cursor: pointer;
+      line-height: 1;
+    }
+    #map-dialog-header button:hover { color: var(--text); }
+    #map-big-wrap { flex: 1; position: relative; }
+    #map-big { position: absolute; inset: 0; }
+    #map-big-mask {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(ellipse 50% 50% at 50% 50%, transparent 30%, rgba(250,250,248,0.45) 55%, rgba(250,250,248,0.88) 80%);
+      z-index: 400;
+    }
+    #map-dialog-hint {
+      padding: 8px 18px;
+      font-size: var(--fs-xs);
+      color: var(--muted);
+      border-top: 1px solid var(--line);
     }
 
     #coord-display {
-      font-size: 0.68rem;
-      color: var(--lime);
+      font-size: var(--fs-xs);
+      color: #4a6312;
       font-family: monospace;
       background: rgba(200,230,62,0.06);
       border: 1px solid var(--lime-border);
@@ -168,13 +379,13 @@
     }
 
     #location-name {
-      font-size: 0.65rem;
+      font-size: var(--fs-xs);
       color: var(--muted);
     }
 
     /* DNA Upload */
     #dna-drop {
-      border: 1px dashed #3a5028;
+      border: 1px dashed #9bb37a;
       border-radius: 6px;
       padding: 14px;
       text-align: center;
@@ -183,12 +394,16 @@
       margin-bottom: 10px;
       position: relative;
       overflow: hidden;
+      box-sizing: border-box;
+      min-height: 76px;
     }
     #dna-drop:hover { border-color: var(--lime); background: var(--lime-dim); }
 
-    .dna-icon { font-size: 1.4rem; margin-bottom: 4px; }
-    .dna-title { font-size: 0.72rem; font-weight: 600; color: var(--text); margin-bottom: 2px; }
-    .dna-hint { font-size: 0.6rem; color: var(--muted); }
+    .dna-icon { font-size: var(--fs-icon-lg); margin-bottom: 4px; }
+    .dna-title { font-size: var(--fs-sm); font-weight: 600; color: #4a6312; margin-bottom: 2px; }
+    .dna-hint { font-size: var(--fs-2xs); color: var(--muted); }
+    .dna-error { font-size: var(--fs-2xs); color: #e0594f; margin-top: 4px; display: none; }
+    .dna-error.show { display: block; }
 
     #dna-badge {
       display: none;
@@ -197,22 +412,25 @@
       background: rgba(200,230,62,0.08);
       border: 1px solid var(--lime-border);
       border-radius: 6px;
-      padding: 7px 10px;
-      font-size: 0.65rem;
+      padding: 14px 10px;
+      font-size: var(--fs-xs);
       color: var(--lime);
+      box-sizing: border-box;
+      min-height: 76px;
+      margin-bottom: 10px;
     }
     #dna-badge.show { display: flex; }
-    .dna-file-icon { font-size: 1rem; }
+    .dna-file-icon { font-size: var(--fs-md); }
 
     /* Simulate button */
     #sim-btn {
       width: 100%;
       padding: 12px;
       background: var(--lime);
-      color: var(--nk);
+      color: var(--on-lime);
       border: none;
       border-radius: 6px;
-      font-size: 0.8rem;
+      font-size: var(--fs-base);
       font-weight: 700;
       cursor: pointer;
       letter-spacing: 0.5px;
@@ -238,12 +456,64 @@
 
     .spin {
       width: 14px; height: 14px;
-      border: 2px solid var(--nk);
+      border: 2px solid var(--on-lime);
       border-top-color: transparent;
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Sim row (button + history) */
+    #sim-row { display: flex; gap: 8px; align-items: stretch; }
+    #sim-row #sim-btn { flex: 1; }
+    #hist-btn {
+      width: 44px; flex-shrink: 0;
+      background: var(--lime-dim);
+      border: 1px solid var(--lime-border);
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; color: #4a6312;
+      transition: all 0.2s; position: relative;
+    }
+    #hist-btn:hover, #hist-btn.open { background: rgba(196,232,50,0.28); border-color: var(--lime); }
+    #hist-tooltip {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 8px); right: 0;
+      width: 310px;
+      background: var(--panel-bg);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.13);
+      z-index: 9999; overflow: hidden;
+    }
+    #hist-tooltip.show { display: block; }
+    .hist-header {
+      padding: 9px 12px 7px;
+      font-size: var(--fs-xs); font-weight: 700;
+      color: var(--muted); letter-spacing: 0.6px;
+      border-bottom: 1px solid var(--line);
+      text-transform: uppercase;
+    }
+    .hist-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; cursor: pointer;
+      transition: background 0.15s;
+      border-bottom: 1px solid var(--line);
+    }
+    .hist-item:last-child { border-bottom: none; }
+    .hist-item:hover { background: var(--lime-dim); }
+    .hist-item.active { background: rgba(196,232,50,0.12); }
+    .hist-icon { font-size: 1.25rem; flex-shrink: 0; }
+    .hist-info { flex: 1; min-width: 0; }
+    .hist-name { font-size: var(--fs-xs); font-weight: 700; color: #4a6312; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hist-meta { font-size: var(--fs-2xs); color: var(--muted); margin-top: 1px; }
+    .hist-badge {
+      font-size: var(--fs-2xs); font-weight: 700;
+      background: var(--lime-dim); border: 1px solid var(--lime-border);
+      color: #4a6312; padding: 2px 6px; border-radius: 10px; white-space: nowrap; flex-shrink: 0;
+    }
 
     /* Model info */
     #model-info {
@@ -259,13 +529,13 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 0.65rem;
+      font-size: var(--fs-xs);
       padding: 5px 0;
-      border-bottom: 1px solid #1e261a;
+      border-bottom: 1px solid var(--line);
     }
     .info-key { color: var(--muted); }
     .info-val { color: var(--text); font-weight: 600; font-family: monospace; }
-    .info-val.lime { color: var(--lime); }
+    .info-val.lime { color: #4a6312; }
 
     #status-dot {
       width: 7px; height: 7px;
@@ -278,12 +548,99 @@
     }
     @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
 
+    /* ── Floating "resultado combinado" window (top-right of screen) ── */
+    #analysis-floating {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 320px;
+    }
+
+    .float-card {
+      background: var(--panel-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px 14px;
+      box-shadow: 0 8px 24px rgba(20,24,18,0.12);
+      opacity: 0;
+      transform: translateY(-10px) translateX(10px);
+      pointer-events: none;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .float-card.visible {
+      opacity: 1;
+      transform: translateY(0) translateX(0);
+      pointer-events: auto;
+    }
+
+    .float-label {
+      font-size: var(--fs-2xs);
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .float-card .info-row, .canvas-tooltip .info-row {
+      font-size: var(--fs-xs);
+      padding: 4px 0;
+    }
+    .float-card .info-row:last-child, .canvas-tooltip .info-row:last-child { border-bottom: none; }
+
+    /* ── Tooltip-style cards anchored next to the sidebar sections they relate to ── */
+    .canvas-tooltip {
+      position: absolute;
+      left: 32px;
+      z-index: 20;
+      width: 300px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px 14px;
+      box-shadow: 0 8px 24px rgba(20,24,18,0.12);
+      opacity: 0;
+      transform: translateX(-10px);
+      pointer-events: none;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .canvas-tooltip.visible {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+    #panel-environment.visible { transition-delay: 0.08s; }
+    #panel-combined.visible { transition-delay: 0.16s; }
+
+    /* Triangle pointer on the left edge, like a speech-bubble tooltip */
+    .canvas-tooltip::after {
+      content: '';
+      position: absolute;
+      left: -9px;
+      top: 22px;
+      width: 0;
+      height: 0;
+      border-top: 9px solid transparent;
+      border-bottom: 9px solid transparent;
+      border-right: 9px solid #ffffff;
+      filter: drop-shadow(-2px 0 2px rgba(20,24,18,0.08));
+    }
+
+    #panel-genetic { top: 90px; }
+    #panel-environment { top: 300px; }
+
     /* Progress bar top */
     #top-bar {
       position: absolute;
       top: 0; left: 0; right: 0;
       height: 2px;
-      background: #1e261a;
+      background: var(--canvas-line);
       z-index: 10;
     }
     #top-bar-fill {
@@ -294,68 +651,105 @@
     }
   </style>
 </head>
-<body>
+<body class="pre-sim">
 
-  <!-- ── Left: 3D canvas ── -->
-  <div id="canvas-wrap">
-    <div id="top-bar"><div id="top-bar-fill"></div></div>
-    <div id="canvas-container"></div>
-
-    <div id="nav-controls">
-      <button class="nav-btn on" id="btn-auto" onclick="toggleAuto()" title="Auto">⏵</button>
-      <button class="nav-btn" onclick="prevStage()" title="Anterior">◀</button>
-      <button class="nav-btn" onclick="nextStage()" title="Siguiente">▶</button>
-    </div>
-
-    <div id="timeline-bar">
-      <div id="stage-title">Germinación y Emergencia</div>
-      <div id="stage-meta">
-        <span id="stage-days">15–20 días</span>
-        <span>·</span>
-        <span id="stage-type-label">Trigo Primavera</span>
-      </div>
-      <div id="timeline"></div>
-    </div>
-  </div>
-
-  <!-- ── Right panel ── -->
+  <!-- ── Left panel ── -->
   <div id="right-panel">
 
-    <!-- Map -->
-    <div class="panel-section">
-      <div class="section-label">Localización del Campo</div>
-      <div id="map"></div>
-      <div id="coord-display">39.8628°N · 4.0273°W</div>
-      <div id="location-name">Toledo, España — Suelo Arcillo-Limoso</div>
+    <!-- Logo -->
+    <div id="logo-wrap">
+      <img id="logo-img" src="assets/logo.png" alt="NORNA logo">
     </div>
 
     <!-- DNA -->
     <div class="panel-section">
       <div class="section-label">Genoma de la Variedad</div>
-      <div id="dna-drop" onclick="fakeDnaUpload()">
-        <div class="dna-icon">🧬</div>
+      <input type="file" id="dna-file-input" accept=".vcf" style="display:none" onchange="handleDnaFileSelected(this)">
+      <div id="dna-drop" onclick="document.getElementById('dna-file-input').click()">
+        <div class="dna-icon">📄</div>
         <div class="dna-title">Cargar ADN de Cepa</div>
-        <div class="dna-hint">.fasta · .vcf · .txt</div>
+        <div class="dna-hint">.vcf</div>
+        <div class="dna-error" id="dna-error">El archivo debe ser .vcf</div>
       </div>
       <div id="dna-badge">
-        <span class="dna-file-icon">🧬</span>
+        <span class="dna-file-icon">📄</span>
         <div>
-          <div style="font-weight:700;font-size:0.7rem">trigo_cepa_toledo.vcf</div>
-          <div style="font-size:0.6rem;color:var(--muted)">847 variantes · cargado</div>
+          <div style="font-weight:700;font-size:var(--fs-sm);color:#4a6312" id="dna-badge-filename">trigo_cepa_toledo.vcf</div>
+          <div style="font-size:var(--fs-2xs);color:var(--muted)" id="dna-badge-meta">cargado correctamente</div>
         </div>
       </div>
+    </div>
+
+    <!-- Map -->
+    <div class="panel-section">
+      <div class="section-label">Localización del Campo</div>
+      <div id="map-preview-wrap" onclick="openMapDialog()">
+        <div id="map"></div>
+        <div id="map-mask"></div>
+        <div id="map-preview-overlay">📍 Pulsa para elegir ubicación</div>
+      </div>
+      <div id="coord-display">39.8628°N · 4.0273°W</div>
+      <div id="location-name">Toledo, España — Suelo Arcillo-Limoso</div>
     </div>
 
     <!-- Simulate -->
     <div class="panel-section">
       <div class="section-label">Simulación Fenológica</div>
-      <button id="sim-btn" onclick="runSimulation()">
-        <span class="btn-text">▶ INICIAR SIMULACIÓN</span>
-        <span class="btn-loading">
-          <span class="spin"></span>
-          <span style="font-size:0.75rem;font-weight:700;color:var(--nk)">Cargando modelo...</span>
-        </span>
-      </button>
+      <div id="sim-row">
+        <button id="sim-btn" onclick="runSimulation()" disabled>
+          <span class="btn-text">▶ INICIAR SIMULACIÓN</span>
+          <span class="btn-loading">
+            <span class="spin"></span>
+            <span style="font-size:var(--fs-sm);font-weight:700;color:var(--on-lime)">Cargando modelo...</span>
+          </span>
+        </button>
+        <button id="hist-btn" onclick="toggleHistTooltip(event)" title="Historial de simulaciones">
+          🕰
+          <div id="hist-tooltip">
+            <div class="hist-header">Historial de simulaciones</div>
+            <div class="hist-item active" onclick="loadHistItem(0,event)">
+              <span class="hist-icon">🌾</span>
+              <span class="hist-info">
+                <span class="hist-name">trigo_cepa_toledo.vcf</span>
+                <span class="hist-meta">38.4 KB · Toledo, España · hace 2 min</span>
+              </span>
+              <span class="hist-badge">Floración</span>
+            </div>
+            <div class="hist-item" onclick="loadHistItem(1,event)">
+              <span class="hist-icon">🍅</span>
+              <span class="hist-info">
+                <span class="hist-name">tomate_cepa_lavega_2026.vcf</span>
+                <span class="hist-meta">12.1 KB · La Vega, Madrid · ayer</span>
+              </span>
+              <span class="hist-badge">Cuajado</span>
+            </div>
+            <div class="hist-item" onclick="loadHistItem(2,event)">
+              <span class="hist-icon">🌽</span>
+              <span class="hist-info">
+                <span class="hist-name">maiz_hibrido_v3.vcf</span>
+                <span class="hist-meta">54.7 KB · Valladolid · hace 3 días</span>
+              </span>
+              <span class="hist-badge">Elongación</span>
+            </div>
+            <div class="hist-item" onclick="loadHistItem(3,event)">
+              <span class="hist-icon">🌿</span>
+              <span class="hist-info">
+                <span class="hist-name">lechuga_var_batavia.vcf</span>
+                <span class="hist-meta">8.9 KB · Île-de-France · hace 5 días</span>
+              </span>
+              <span class="hist-badge">Roseta</span>
+            </div>
+            <div class="hist-item" onclick="loadHistItem(4,event)">
+              <span class="hist-icon">🫑</span>
+              <span class="hist-info">
+                <span class="hist-name">pimiento_lamuyo_s2.vcf</span>
+                <span class="hist-meta">21.3 KB · Almería · hace 1 semana</span>
+              </span>
+              <span class="hist-badge">Germinación</span>
+            </div>
+          </div>
+        </button>
+      </div>
     </div>
 
     <!-- Model info -->
@@ -373,6 +767,22 @@
         <span class="info-key">Días acumulados</span>
         <span class="info-val" id="info-days">—</span>
       </div>
+    </div>
+
+  </div>
+
+  <!-- ── Right: 3D canvas ── -->
+  <div id="canvas-wrap">
+    <div id="top-bar"><div id="top-bar-fill"></div></div>
+    <div id="canvas-container"></div>
+    <div id="sim-placeholder">
+      <div id="sim-placeholder-icon">🌾</div>
+      <div id="sim-placeholder-text">Carga el genoma e indica la ubicación del campo<br>para iniciar la simulación</div>
+    </div>
+
+    <!-- Tooltip de genética, anclado junto a la sección "Genoma" del panel lateral -->
+    <div class="canvas-tooltip" id="panel-genetic">
+      <div class="float-label">🧬 Genética (fija)</div>
       <div class="info-row">
         <span class="info-key">Variedad</span>
         <span class="info-val" id="info-variety">T. aestivum</span>
@@ -382,32 +792,106 @@
         <span class="info-val" id="info-type">Primavera</span>
       </div>
       <div class="info-row">
-        <span class="info-key">Zona climática</span>
-        <span class="info-val" id="info-climate">Csb — Med. seco</span>
+        <span class="info-key">Producción potencial</span>
+        <span class="info-val" id="gen-produccion">—</span>
       </div>
       <div class="info-row">
-        <span class="info-key">Lat / Lon</span>
-        <span class="info-val" id="info-coords">39.86°N / 4.03°W</span>
+        <span class="info-key">Calidad visual</span>
+        <span class="info-val" id="gen-calidad">—</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">Resistencia genética</span>
+        <span class="info-val" id="gen-resistencia">—</span>
+      </div>
+    </div>
+
+    <!-- Tooltip de terreno/clima, anclado junto a la sección "Localización del Campo" -->
+    <div class="canvas-tooltip" id="panel-environment">
+      <div class="float-label">🌍 Terreno / Clima</div>
+      <div class="info-row">
+        <span class="info-key">Riesgo climático</span>
+        <span class="info-val" id="env-riesgo">—</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">Necesidad de riego</span>
+        <span class="info-val" id="env-riego">—</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">Zona climática</span>
+        <span class="info-val" id="info-climate">Csb — Med. seco</span>
       </div>
       <div class="info-row">
         <span class="info-key">Suelo</span>
         <span class="info-val" id="info-soil">Arcillo-limoso</span>
       </div>
+      <div class="info-row">
+        <span class="info-key">Lat / Lon</span>
+        <span class="info-val" id="info-coords">39.86°N / 4.03°W</span>
+      </div>
+    </div>
+
+    <!-- Ventana flotante de resultado combinado — arriba a la derecha de la pantalla -->
+    <div id="analysis-floating">
+      <div class="float-card" id="panel-combined">
+        <div class="float-label">⚡ Resultado combinado</div>
+        <div class="info-row">
+          <span class="info-key">Riesgo de plaga final</span>
+          <span class="info-val" id="comb-plaga">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Calendario estimado</span>
+          <span class="info-val" id="comb-calendario">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="timeline-bar">
+      <div id="stage-title">Germinación y Emergencia</div>
+      <div id="stage-meta">
+        <span id="stage-days">15–20 días</span>
+        <span>·</span>
+        <span id="stage-type-label">Trigo Primavera</span>
+      </div>
+      <div id="timeline-content">
+        <div id="timeline"></div>
+        <div id="stage-slider-row">
+          <button class="nav-btn on" id="btn-auto" onclick="toggleAuto()" title="Auto">⏵</button>
+          <input type="range" id="stage-slider" min="0" max="6" step="1" value="0" oninput="window.setStageFromSlider(this.value)">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Map selection dialog ── -->
+  <div id="map-dialog-backdrop" onclick="if(event.target===this) closeMapDialog()">
+    <div id="map-dialog">
+      <div id="map-dialog-header">
+        <span>Selecciona la ubicación del campo</span>
+        <button onclick="closeMapDialog()">✕</button>
+      </div>
+      <div id="map-big-wrap">
+        <div id="map-big"></div>
+        <div id="map-big-mask"></div>
+      </div>
+      <div id="map-dialog-hint">Haz clic en un punto del mapa para fijar la ubicación</div>
     </div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    // ── Leaflet map ──
-    const map = L.map('map', { zoomControl: false, attributionControl: false })
-      .setView([39.8628, -4.0273], 7);
+    // ── Leaflet preview map (small, non-interactive) ──
+    const map = L.map('map', {
+      zoomControl: false, attributionControl: false,
+      dragging: false, scrollWheelZoom: false, doubleClickZoom: false,
+      touchZoom: false, boxZoom: false, keyboard: false
+    }).setView([39.8628, -4.0273], 7);
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       maxZoom: 18
     }).addTo(map);
 
     const markerIcon = L.divIcon({
-      html: '<div style="width:12px;height:12px;background:#c8e63e;border-radius:50%;border:2px solid #16160e;box-shadow:0 0 8px #c8e63e"></div>',
+      html: '<div style="width:12px;height:12px;background:#c8e63e;border-radius:50%;border:2px solid #ffffff;box-shadow:0 0 8px #c8e63e"></div>',
       iconSize: [12, 12], iconAnchor: [6, 6], className: ''
     });
 
@@ -419,11 +903,8 @@
       { lat: 51.1657, lon: 10.4515, name: 'Sajonia, Alemania', soil: 'Limo-arcilloso', climate: 'Cfb — Oceánico', coords: '51.17°N / 10.45°E' },
       { lat: 48.8566, lon: 2.3522, name: 'Île-de-France', soil: 'Limoso profundo', climate: 'Cfb — Oceánico', coords: '48.86°N / 2.35°E' },
     ];
-    let locIdx = 0;
 
-    map.on('click', (e) => {
-      locIdx = (locIdx + 1) % LOCATIONS.length;
-      const loc = LOCATIONS[locIdx];
+    function applyLocation(loc) {
       marker.setLatLng([loc.lat, loc.lon]);
       map.flyTo([loc.lat, loc.lon], 7, { duration: 1 });
       document.getElementById('coord-display').textContent = `${loc.coords.split(' / ')[0]} · ${loc.coords.split(' / ')[1]}`;
@@ -432,20 +913,91 @@
       document.getElementById('info-climate').textContent = loc.climate;
       document.getElementById('info-coords').textContent = loc.coords;
       if (window.__wheatSetLocation) window.__wheatSetLocation(loc);
-    });
+      locationSelected = true;
+      checkSimReady();
+    }
 
-    // ── Fake DNA upload ──
+    function nearestLocation(lat, lon) {
+      let best = LOCATIONS[0], bestD = Infinity;
+      for (const loc of LOCATIONS) {
+        const d = (loc.lat-lat)**2 + (loc.lon-lon)**2;
+        if (d < bestD) { bestD = d; best = loc; }
+      }
+      return best;
+    }
+
+    // ── Map selection dialog (big, interactive) ──
+    let bigMap = null, bigMarker = null;
+
+    function ensureBigMap() {
+      if (bigMap) return;
+      bigMap = L.map('map-big', { zoomControl: true, attributionControl: false })
+        .setView(map.getCenter(), 6);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 18
+      }).addTo(bigMap);
+      bigMarker = L.marker(map.getCenter(), { icon: markerIcon }).addTo(bigMap);
+
+      bigMap.on('click', (e) => {
+        const loc = nearestLocation(e.latlng.lat, e.latlng.lng);
+        bigMarker.setLatLng(e.latlng);
+        setTimeout(() => {
+          applyLocation(loc);
+          closeMapDialog();
+        }, 500);
+      });
+    }
+
+    function openMapDialog() {
+      document.getElementById('map-dialog-backdrop').classList.add('show');
+      ensureBigMap();
+      setTimeout(() => {
+        bigMap.invalidateSize();
+        bigMap.setView(marker.getLatLng(), 6);
+        bigMarker.setLatLng(marker.getLatLng());
+      }, 0);
+    }
+
+    function closeMapDialog() {
+      document.getElementById('map-dialog-backdrop').classList.remove('show');
+    }
+
+    window.openMapDialog = openMapDialog;
+    window.closeMapDialog = closeMapDialog;
+
+    // ── Habilitación del botón de simulación: requiere genoma cargado + ubicación seleccionada ──
+    let locationSelected = false;
+    function checkSimReady() {
+      document.getElementById('sim-btn').disabled = !(dnaLoaded && locationSelected);
+    }
+
+    // ── DNA upload (requiere seleccionar un archivo real; solo valida extensión .vcf) ──
     let dnaLoaded = false;
-    function fakeDnaUpload() {
+    function handleDnaFileSelected(input) {
       if (dnaLoaded) return;
+      const file = input.files && input.files[0];
+      const errorEl = document.getElementById('dna-error');
+      if (!file) return;
+
+      if (!file.name.toLowerCase().endsWith('.vcf')) {
+        errorEl.classList.add('show');
+        input.value = '';
+        return;
+      }
+      errorEl.classList.remove('show');
+
       const drop = document.getElementById('dna-drop');
       drop.style.opacity = '0.5';
       drop.style.pointerEvents = 'none';
       setTimeout(() => {
         drop.style.display = 'none';
+        document.getElementById('dna-badge-filename').textContent = file.name;
+        const sizeKb = (file.size / 1024).toFixed(1);
+        document.getElementById('dna-badge-meta').textContent = `cargado correctamente · ${sizeKb} KB`;
         document.getElementById('dna-badge').classList.add('show');
         dnaLoaded = true;
-      }, 800);
+        checkSimReady();
+      }, 400);
     }
 
     // ── Simulation ──
@@ -461,18 +1013,92 @@
         btn.classList.remove('loading');
         btn.disabled = false;
         btn.innerHTML = '<span class="btn-text">✓ MODELO CARGADO</span>';
-        btn.style.background = '#2a3820';
-        btn.style.color = 'var(--lime)';
+        btn.style.background = 'var(--line)';
+        btn.style.color = '#5c7a18';
         btn.style.border = '1px solid var(--lime-border)';
         btn.style.cursor = 'default';
         document.getElementById('model-status').textContent = 'Activo';
         simDone = true;
+        document.body.classList.remove('pre-sim');
+        if (window.__wheatResize) window.__wheatResize();
         if (window.__wheatStartAuto) window.__wheatStartAuto();
-      }, 2200);
+        populateAnalysisPanels();
+      }, 4000);
     }
 
-    window.fakeDnaUpload = fakeDnaUpload;
+    // ── Paneles de análisis (genética / terreno-clima / combinado) ──
+    // NOTA: datos hardcodeados para esta maqueta. Estructura pensada para
+    // sustituirse 1:1 por la respuesta real de /api/runs/:id/genome (geneticAnalysis)
+    // y /api/runs/:id/phenology (environmentalAnalysis, combinedAnalysis) cuando
+    // se conecten datos geográficos/clima/lluvia reales.
+    const MOCK_ANALYSIS = {
+      genetic: {
+        produccion_potencial: 'Por encima del estándar (+15%)',
+        calidad_visual: 'Grano uniforme, color dorado intenso',
+        resistencia_genetica: 'Roya amarilla, sequía (media)'
+      },
+      environment: {
+        necesidad_riego: '~18 mm/semana',
+        riesgo_climatico: 'Bajo (sin heladas previstas)'
+      },
+      combined: {
+        riesgo_plaga_final: 'Medio · presión de hongos por humedad',
+        calendario_estimado: 'Cosecha en ~143 días (zona Csb)'
+      }
+    };
+
+    function populateAnalysisPanels(data = MOCK_ANALYSIS) {
+      document.getElementById('gen-produccion').textContent = data.genetic.produccion_potencial;
+      document.getElementById('gen-calidad').textContent = data.genetic.calidad_visual;
+      document.getElementById('gen-resistencia').textContent = data.genetic.resistencia_genetica;
+      document.getElementById('env-riego').textContent = data.environment.necesidad_riego;
+      document.getElementById('env-riesgo').textContent = data.environment.riesgo_climatico;
+      document.getElementById('comb-plaga').textContent = data.combined.riesgo_plaga_final;
+      document.getElementById('comb-calendario').textContent = data.combined.calendario_estimado;
+
+      ['panel-genetic', 'panel-environment', 'panel-combined'].forEach(id => {
+        document.getElementById(id).classList.add('visible');
+      });
+    }
+
+    window.handleDnaFileSelected = handleDnaFileSelected;
     window.runSimulation = runSimulation;
+    window.populateAnalysisPanels = populateAnalysisPanels;
+
+    // ── History tooltip ──
+    function toggleHistTooltip(e) {
+      e.stopPropagation();
+      const btn = document.getElementById('hist-btn');
+      const tip = document.getElementById('hist-tooltip');
+      const open = tip.classList.toggle('show');
+      btn.classList.toggle('open', open);
+    }
+    function loadHistItem(idx, e) {
+      e.stopPropagation();
+      document.getElementById('hist-tooltip').classList.remove('show');
+      document.getElementById('hist-btn').classList.remove('open');
+
+      if (idx !== 2) return; // solo el maíz es cargable
+
+      const btn = document.getElementById('hist-btn');
+      btn.textContent = '';
+      const spinner = document.createElement('span');
+      spinner.className = 'spin';
+      btn.appendChild(spinner);
+      btn.disabled = true;
+
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.textContent = '🕰';
+        document.querySelectorAll('.hist-item').forEach((el, i) => el.classList.toggle('active', i === idx));
+      }, 1000);
+    }
+    document.addEventListener('click', () => {
+      document.getElementById('hist-tooltip').classList.remove('show');
+      document.getElementById('hist-btn').classList.remove('open');
+    });
+    window.toggleHistTooltip = toggleHistTooltip;
+    window.loadHistItem = loadHistItem;
   </script>
 
   <script type="importmap">

@@ -30,7 +30,46 @@ export async function parseVcf(vcfContent, logger) {
   }
 
   const inferredCultivar = inferCultivar(keyVariants);
-  return { totalVariants, keyVariants, inferredCultivar, species: 'Solanum lycopersicum' };
+  const geneticAnalysis = buildGeneticAnalysis(keyVariants);
+  return { totalVariants, keyVariants, inferredCultivar, geneticAnalysis, species: 'Solanum lycopersicum' };
+}
+
+// Bloque "genética pura": rasgos fijados por el genoma, independientes de dónde se plante.
+function buildGeneticAnalysis(keyVariants) {
+  const byCategory = (cat) => {
+    const seen = new Set();
+    return keyVariants.filter(v => {
+      const qtl = QTL_CATALOG.find(q => q.name === v.qtl_match);
+      if (qtl?.category !== cat || seen.has(v.qtl_match)) return false;
+      seen.add(v.qtl_match);
+      return true;
+    });
+  };
+
+  const produccionQtls = byCategory('produccion');
+  const calidadQtls = byCategory('calidad_visual');
+  const resistenciaQtls = byCategory('resistencia');
+
+  return {
+    produccion_potencial: {
+      qtls: produccionQtls.map(v => ({ name: v.qtl_match, trait: v.trait, effect: v.effect })),
+      resumen: produccionQtls.length
+        ? `Potencial de rendimiento por encima del estándar (${produccionQtls.map(v => v.effect).join(', ')})`
+        : 'Sin QTLs de rendimiento detectados — potencial estándar'
+    },
+    calidad_visual: {
+      qtls: calidadQtls.map(v => ({ name: v.qtl_match, trait: v.trait, effect: v.effect })),
+      resumen: calidadQtls.length
+        ? `Rasgos visuales diferenciados: ${calidadQtls.map(v => `${v.trait} (${v.effect})`).join(', ')}`
+        : 'Sin QTLs de calidad visual detectados — fenotipo estándar'
+    },
+    resistencia_genetica: {
+      qtls: resistenciaQtls.map(v => ({ name: v.qtl_match, trait: v.trait, effect: v.effect })),
+      resumen: resistenciaQtls.length
+        ? `Resistencias detectadas: ${resistenciaQtls.map(v => v.trait.replace('resistencia_', '').replace('tolerancia_', '')).join(', ')}`
+        : 'Sin resistencias genéticas conocidas detectadas'
+    }
+  };
 }
 
 function inferCultivar(keyVariants) {

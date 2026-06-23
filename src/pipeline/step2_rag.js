@@ -1,5 +1,5 @@
 import { anthropic } from '../services/anthropic.js';
-import { fetchWeatherForLocation } from '../services/weather.js';
+import { fetchWeatherForLocation, assessEnvironmentalRisk } from '../services/weather.js';
 
 // RAG context is simplified for hackathon: we use a curated knowledge base
 // embedded directly, avoiding ChromaDB runtime dependency for the demo
@@ -78,6 +78,7 @@ El visual_prompt debe ser en inglés, descriptivo y visual. scale_factor entre 0
 export async function generatePhenologyJson({ genomeSummary, location, sowingDate, weeks }, logger) {
   const env = await fetchWeatherForLocation(location, sowingDate, weeks);
   logger.debug('Condiciones ambientales calculadas');
+  const environmentalAnalysis = assessEnvironmentalRisk(env, location);
 
   const userPrompt = `# Genoma analizado
 ${JSON.stringify(genomeSummary, null, 2)}
@@ -100,7 +101,7 @@ SOLO JSON, sin markdown, sin texto adicional.`;
   const key = process.env.ANTHROPIC_API_KEY || '';
   if (!key || key.includes('REPLACE_ME') || key.trim() === '') {
     logger.info('  · [DEMO MODE] ANTHROPIC_API_KEY no configurada — usando fenología pre-generada');
-    return buildDemoPhenology(genomeSummary, weeks);
+    return attachAnalysisBlocks(buildDemoPhenology(genomeSummary, weeks), genomeSummary, environmentalAnalysis);
   }
 
   logger.info('  · Llamando a Claude Sonnet...');
@@ -118,17 +119,51 @@ SOLO JSON, sin markdown, sin texto adicional.`;
     try {
       const parsed = JSON.parse(cleanJson);
       logger.info(`  · Claude devolvió ${parsed.weeks.length} semanas`);
-      return parsed;
+      return attachAnalysisBlocks(parsed, genomeSummary, environmentalAnalysis);
     } catch (e) {
       logger.error('JSON parse error, extrayendo JSON del response');
       const match = cleanJson.match(/\{[\s\S]*\}/);
-      if (match) return JSON.parse(match[0]);
+      if (match) return attachAnalysisBlocks(JSON.parse(match[0]), genomeSummary, environmentalAnalysis);
       throw new Error('Claude no devolvió JSON válido');
     }
   } catch (err) {
     logger.error(`  · Claude API error (${err.status || err.message}) — usando fenología pre-generada`);
-    return buildDemoPhenology(genomeSummary, weeks);
+    return attachAnalysisBlocks(buildDemoPhenology(genomeSummary, weeks), genomeSummary, environmentalAnalysis);
   }
+}
+
+// Bloque "interacción genotipo × ambiente": el riesgo de plaga final combina
+// la resistencia genética detectada con la presión climática real de la zona/fecha.
+function buildCombinedPestRisk(genomeSummary, environmentalAnalysis) {
+  const resistenceTraits = new Set(
+    (genomeSummary.geneticAnalysis?.resistencia_genetica?.qtls || []).map(q => q.trait)
+  );
+  const hasResistance = resistenceTraits.size > 0;
+
+  return environmentalAnalysis.weeks.map(w => {
+    const climatePressure = w.climate_risk_reasons.some(r => r.includes('hongos')) ? 'media' : 'baja';
+    let final_risk = 'bajo';
+    if (climatePressure === 'media' && !hasResistance) final_risk = 'alto';
+    else if (climatePressure === 'media' && hasResistance) final_risk = 'medio';
+    else if (climatePressure === 'baja' && !hasResistance) final_risk = 'medio';
+
+    return {
+      week: w.week,
+      final_risk,
+      genetic_resistance_applied: hasResistance ? Array.from(resistenceTraits) : [],
+      climate_pressure: climatePressure
+    };
+  });
+}
+
+function attachAnalysisBlocks(phenologyJson, genomeSummary, environmentalAnalysis) {
+  return {
+    ...phenologyJson,
+    environmentalAnalysis,
+    combinedAnalysis: {
+      pest_risk: buildCombinedPestRisk(genomeSummary, environmentalAnalysis)
+    }
+  };
 }
 
 function buildDemoPhenology(genomeSummary, weeks) {
